@@ -170,12 +170,15 @@ def getRowAndColumn(move,N):
         moveColumn      = 1 + (move - 1) % N
         return(moveRow,moveColumn)
 
-####### Student Functions Start Here ########
 
+
+
+####### Student Functions Start Here ########
 def play(board, N, player):
         finish = False
         moveCounter = 0 #Moves counter (up to 2 {three moves})
         move = [] #Array that holds the player's moves
+        
         while not finish:
                 move.append (input(bcolors.QUESTION+'Enter a number to make a move: '+bcolors.ENDC))
 
@@ -213,7 +216,79 @@ def play(board, N, player):
                         else:
                                 print(bcolors.ERROR+"This is not a legitimate move"+bcolors.ENDC)
                 else:
-                        print(bcolors.ERROR+"Input must be an integer"+bcolors.ENDC)             
+                        print(bcolors.ERROR+"Input must be an integer"+bcolors.ENDC) 
+
+
+def getComputerMove_random (board, N, player):
+    finish = False 
+   
+    moveCounter = 0 #Moves counter (up to 2 {three moves})
+    move = [] #Array that holds the player's moves
+ 
+    while not finish:
+              
+         move.append(random.randint(1,N*N)) 
+
+
+         move[moveCounter] = int(move[moveCounter])
+                #Check if move is on the board
+         if move[moveCounter] <= N*N and move[moveCounter] > 0:
+
+                  #First move (player has to play this one)
+                if moveCounter == 0:
+                  screen_clear()
+                  check, finish = firstMoveRandChecks(board,N,move,player)
+                  drawNimPalette(board,N)
+                  if check:
+                         moveCounter += 1
+                         
+                         #if not finish:
+                         # finish = True
+                  
+                           #Second move
+                elif moveCounter == 1:
+                    screen_clear()
+                    if secondMoveChecks(board,N,move,player):
+                         drawNimPalette(board,N)
+                         moveCounter += 1
+                        
+                    else:
+                         drawNimPalette(board,N)
+                         finish = True
+                                #Third move (last move)
+                elif moveCounter == 2:
+                        screen_clear()
+                        thirdMoveChecks(board,N,move,player)
+                        drawNimPalette(board,N)
+                        finish = True
+         else:
+                                print(bcolors.ERROR+"This is not a legitimate move"+bcolors.ENDC)
+
+
+
+def firstMoveRandChecks(board, N, move,player): #Checks if the first move is valid
+
+        #Flags for checking and player movement ending
+        checkflag, endflag = False, False
+
+        #Check if cell is empty
+        while board[move[0]] == 'G' or board[move[0]] == 'R' :
+                move[0]+=1
+           
+
+         #Make move
+        board[move[0]] = player
+        board[0] +=1 
+        checkflag = True
+
+                #If cell is on the diagonal, player can't play again
+        row,column = getRowAndColumn(move[0],N)
+        if row == column:
+          endflag = True
+ 
+        return checkflag, endflag
+
+
 
 def firstMoveChecks(board, N, move,player): #Checks if the first move is valid
 
@@ -336,6 +411,7 @@ def isSequential2Cells(move1, move2, move3, N):
         return flag
 
 ######### MAIN PROGRAM BEGINS #########
+
 screen_clear()
 
 print(bcolors.HEADER + """
@@ -444,8 +520,9 @@ while playNewGameFlag:
                         play(nimBoard,N,playerLetter)
                         turn = 'computer'
                 else: 
-                        play(nimBoard,N,computerLetter) #Wiil be replaced
-                        turn = 'player'
+                       getComputerMove_random(nimBoard,N,computerLetter)
+                      # play(nimBoard,N,computerLetter) #Wiil be replaced
+                       turn = 'player'
 
                 gameon = not isBoardFull(nimBoard, N)
         
