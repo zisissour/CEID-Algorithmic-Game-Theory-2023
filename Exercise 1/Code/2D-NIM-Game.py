@@ -241,9 +241,7 @@ def getComputerMove_random (board, N, player):
                   drawNimPalette(board,N)
                   if check:
                          moveCounter += 1
-                         
-                         #if not finish:
-                         # finish = True
+                        
                   
                            #Second move
                 elif moveCounter == 1:
@@ -273,7 +271,8 @@ def firstMoveRandChecks(board, N, move,player): #Checks if the first move is val
 
         #Check if cell is empty
         while board[move[0]] == 'G' or board[move[0]] == 'R' :
-                move[0]+=1
+                #move[0]+=1
+                 move[0]=random.randint(1,N*N) 
            
 
          #Make move
