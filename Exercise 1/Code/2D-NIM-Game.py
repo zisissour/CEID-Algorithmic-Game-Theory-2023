@@ -172,7 +172,6 @@ def getRowAndColumn(move,N):
 
 
 
-
 ####### Student Functions Start Here ########
 def play(board, N, player):
         finish = False
@@ -217,7 +216,9 @@ def play(board, N, player):
                                 print(bcolors.ERROR+"This is not a legitimate move"+bcolors.ENDC)
                 else:
                         print(bcolors.ERROR+"Input must be an integer"+bcolors.ENDC) 
-
+        
+        #Return player's moves
+        return move
 
 def getComputerMove_random (board, N, player):
     finish = False 
@@ -237,7 +238,7 @@ def getComputerMove_random (board, N, player):
                   #First move (player has to play this one)
                 if moveCounter == 0:
                   screen_clear()
-                  check, finish = firstMoveRandChecks(board,N,move,player)
+                  check, finish = firstMoveChecks(board,N,move,player)
                   drawNimPalette(board,N)
                   if check:
                          moveCounter += 1
@@ -262,32 +263,64 @@ def getComputerMove_random (board, N, player):
          else:
                                 print(bcolors.ERROR+"This is not a legitimate move"+bcolors.ENDC)
 
+def getComputerMove_copycat (board, N, player, opponentMove):
+        #If the oppenent has made a move (computer does not play first)
+        if opponentMove:
+                #If opponent move is on the diagonal
 
+                row, col = getRowAndColumn(opponentMove[0],N)
+                if row == col:
+                        #Calculate the computer's move
+                        row = N - row +1
+                        col = N - col + 1
+                        computerMove = getMove(row, col,N)
 
-def firstMoveRandChecks(board, N, move,player): #Checks if the first move is valid
+                        #Check if it's empty
+                        if board[computerMove] == 'R' or board[computerMove] == 'G':
+                                #If not get empty cells on the diagonal
+                                freeDiagonalCells = []
+                                for i in range(1,N):
+                                        temp = getMove(i,i,N)
+                                        if board[temp] != 'R' and board[temp] != 'G':
+                                                freeDiagonalCells.append(temp)
 
-        #Flags for checking and player movement ending
-        checkflag, endflag = False, False
+                                #If there are none play first empty cell
+                                if not freeDiagonalCells:
+                                        empty = getEmptyCells(board,N)
+                                        board[empty[0]] = player
+                                        board[0]+=1
+                                else:# if there are play one randomly
+                                        board[random.choice(freeDiagonalCells)] = player
+                                        board[0]+=1
+                        else:#Cell is empty
+                                board[computerMove] = player #Play move
+                                board[0]+=1
+                
+                else:
+                        canPlay = True
+                        movestoplay = []
+                        #Itterate over the opponent's moves 
+                        for move in opponentMove:
+                                col, row = getRowAndColumn(move,N) #Get row and column inverted (possible computer move)
+                                computerMove = getMove(row,col,N) #Calculate move
+                                #Check if empty
+                                if board[computerMove] == 'R' or board[computerMove] == 'G':
+                                        canPlay = False
+                                #Save computer move
+                                movestoplay.append(computerMove)
+                        
+                        #If all are empty then play them
+                        if canPlay:
+                                for move in movestoplay:
+                                        board[move] = player
+                                        board[0] +=1
 
-        #Check if cell is empty
-        while board[move[0]] == 'G' or board[move[0]] == 'R' :
-                #move[0]+=1
-                 move[0]=random.randint(1,N*N) 
-           
-
-         #Make move
-        board[move[0]] = player
-        board[0] +=1 
-        checkflag = True
-
-                #If cell is on the diagonal, player can't play again
-        row,column = getRowAndColumn(move[0],N)
-        if row == column:
-          endflag = True
- 
-        return checkflag, endflag
-
-
+                        else: #play first fit
+                                getComputerMove_random(board, N, player) #TO BE REPLACED
+        #If not play random move
+        else:
+                getComputerMove_random(board, N, player)
+        drawNimPalette(board,N)
 
 def firstMoveChecks(board, N, move,player): #Checks if the first move is valid
 
@@ -409,6 +442,20 @@ def isSequential2Cells(move1, move2, move3, N):
 
         return flag
 
+def getMove(row,column, N):
+        move = N*(row-1) + column
+        return move
+
+def getEmptyCellNum(board,N):
+        return N*N-board[0]
+
+def getEmptyCells(board,N):
+        cells =[]
+        for i in range(1,N*N):
+                if board[i] != 'R' and board[i] != 'G':
+                        cells.append(i)
+        
+        return cells
 ######### MAIN PROGRAM BEGINS #########
 
 screen_clear()
@@ -417,9 +464,9 @@ print(bcolors.HEADER + """
 ---------------------------------------------------------------------
                      CEID NE509 / LAB-1  
 ---------------------------------------------------------------------
-STUDENT NAME:           < provide your name here >
-STUDENT AM:             < provide your AM here >
-JOINT WORK WITH:        < provide your partner's name and AM here >
+STUDENT NAME:           Zisis Sourlas
+STUDENT AM:             1072477
+JOINT WORK WITH:        Michail Mpallas <AM>
 ---------------------------------------------------------------------
 """ + bcolors.ENDC)
 
@@ -435,6 +482,7 @@ print(bcolors.HEADER + """
     3.      One player (the green) writes G, the other player 
             (the red) writes R, in empty cells.
 """ + bcolors.ENDC ) 
+
 
 input("Press ENTER to continue...")
 screen_clear()
@@ -513,15 +561,22 @@ while playNewGameFlag:
 ######### Student Main Program Code Starts Here ##########
         gameon = True
 
+        latestPlayerMove = []
         while gameon:
                 print(bcolors.GREEN+ turn + ' plays!'+ bcolors.ENDC)
                 if turn == 'player':
-                        play(nimBoard,N,playerLetter)
+                        latestPlayerMove=play(nimBoard,N,playerLetter)
                         turn = 'computer'
                 else: 
-                       getComputerMove_random(nimBoard,N,computerLetter)
-                      # play(nimBoard,N,computerLetter) #Wiil be replaced
-                       turn = 'player'
+                        if computerStrategy == 'random':
+                               getComputerMove_random(nimBoard,N,computerLetter)
+                        elif computerStrategy == 'first free':
+                               getComputerMove_random(nimBoard,N,computerLetter) #TO be replaced
+                        else:
+                                getComputerMove_copycat(nimBoard,N,computerLetter, latestPlayerMove)
+
+                        turn = 'player'
+                        latestPlayerMove = []
 
                 gameon = not isBoardFull(nimBoard, N)
         
