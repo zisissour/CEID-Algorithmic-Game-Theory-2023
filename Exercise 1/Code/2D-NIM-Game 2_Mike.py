@@ -247,17 +247,21 @@ def getComputerMove_random (board, N, player):
                          else:
                                 screen_clear()
                                 emptyCells=getEmptyCells(board,N)
-
-                                for i in range(len(emptyCells)):
+                                
+                                
+                                for i in range(1,len(emptyCells)):
                                          row,column=getRowAndColumn(emptyCells[i],N)
                                          if row!=column :
                                             if isSequential(emptyCells[i],move[0],N):
-                                                  move.append(emptyCells[i])
-                                                  board[move[1]] = player
-                                                  board[0] +=1
-                                                  break
+                                                     move.append(emptyCells[i])
+                                                     board[move[1]] = player
+                                                     board[0] +=1
+                                                    
+                                                     break
+                                                                 
                                          else :
                                                 i+=1
+                                        
                                 drawNimPalette(board,N)
                                 moveCounter += 1
                                 if numMove==1 or finish==True:
@@ -268,16 +272,20 @@ def getComputerMove_random (board, N, player):
                                    #Third move (last move)
                                      screen_clear()
                                      emptyCells=getEmptyCells(board,N)
-                                     for i in range(len(emptyCells)):
+                                     
+                                     
+                                     for i in range(1,len(emptyCells)):
                                          row,column=getRowAndColumn(emptyCells[i],N)
                                          if row!=column :
                                             if isSequential2Cells(emptyCells[i],move[0],move[1], N):
                                                   board[emptyCells[i]] = player
                                                   board[0] +=1
+                                                 
                                                   break
                                          else :
-                                                   i+=1
-                                            
+                                                  i+=1
+                                         
+                                          
                                      screen_clear()
                                      
                                      drawNimPalette(board,N)
@@ -335,21 +343,21 @@ def firstMoveChecks(board, N, move,player): #Checks if the first move is valid
 
         return checkflag, endflag
 
-def secondMoveRandChecks(board,N,move,player):
-    finish=False
-    avCells=getEmptyCells(board,N)
+# def secondMoveRandChecks(board,N,move,player):
+  #  finish=False
+ #   avCells=getEmptyCells(board,N)
 
-    for i in range (len(avCells)):
-            if isSequential(move[0],avCells[i], N) :
-                move[1]=avCells[i]
-                break
-    if not move[1]:
-            finish=True
-    else:
-             board[move[1]] = player
-             board[0] +=1
+  #  for i in range (len(avCells)):
+ #           if isSequential(move[0],avCells[i], N) :
+  #              move[1]=avCells[i]
+ #               break
+ #   if not move[1]:
+   #         finish=True
+   # else:
+   #          board[move[1]] = player
+   #          board[0] +=1
 
-    return finish 
+  #  return finish 
 
 
 
@@ -385,16 +393,16 @@ def secondMoveChecks(board, N, move,player): #Checks if the second move is valid
         
         return checkflag
 
-def thirdMoveRandChecks(board,N,move,player):
-        finish=False
-        avCellNum=getEmptyCellNum(board,N)
-        for i in range(len(avCellNum)):
-                 if isSequential2Cells(move[0],move[1],move[2], N):
-                      board[move[2]] = player    
-                      board[0] +=1
-                 else:
-                         finish=True
-        return finish      
+#def thirdMoveRandChecks(board,N,move,player):
+      #  finish=False
+      #  avCellNum=getEmptyCellNum(board,N)
+      #  for i in range(len(avCellNum)):
+      #           if isSequential2Cells(move[0],move[1],move[2], N):
+       #               board[move[2]] = player    
+      #                board[0] +=1
+      #           else:
+      #                   finish=True
+      #  return finish      
    
 
 
@@ -477,7 +485,7 @@ def getEmptyCellNum(board,N):
 
 def getEmptyCells(board,N):
         cells =[]
-        for i in range(1,N*N):
+        for i in range(1,N*N+1):
                 if board[i] != 'R' and board[i] != 'G':
                         cells.append(i)
         
