@@ -176,10 +176,10 @@ def getRowAndColumn(move,N):
 def play(board, N, player):
         finish = False
         moveCounter = 0 #Moves counter (up to 2 {three moves})
-        move = [] #Array that holds the player's moves
+        move = [1,2,3] #Array that holds the player's moves
         
         while not finish:
-                move.append (input(bcolors.QUESTION+'Enter a number to make a move: '+bcolors.ENDC))
+                move[moveCounter] =  (input(bcolors.QUESTION+'Enter a number to make a move: '+bcolors.ENDC))
 
                 if move[moveCounter].isnumeric():
 
@@ -233,12 +233,12 @@ def getComputerMove_random (board, N, player):
 
                else :
                          move.append(random.choice(emptyCells)) 
-                         numMove=2 #random.randint(0,2)
+                         numMove=random.randint(0,2)
 
                   #First move (player has to play this one)
-                         screen_clear()
+                         #screen_clear()
                          finish = firstMoveRandChecks(board,N,move,player)
-                         drawNimPalette(board,N)
+                         #drawNimPalette(board,N)
                          moveCounter += 1
                          if numMove==0 or finish==True:
                                    finish=True
@@ -246,7 +246,7 @@ def getComputerMove_random (board, N, player):
                         
                            #Second move
                          else:
-                                screen_clear()
+                                #screen_clear()
                                 emptyCells=getEmptyCells(board,N)
                                 
                                 
@@ -265,7 +265,7 @@ def getComputerMove_random (board, N, player):
                                                     i+=1
                                                 
                                         
-                                drawNimPalette(board,N)
+                                #drawNimPalette(board,N)
                                 moveCounter += 1
                                 if numMove==1 or finish==True:
                                    finish=True
@@ -273,7 +273,7 @@ def getComputerMove_random (board, N, player):
 
                                 elif numMove==2:
                                    #Third move (last move)
-                                     screen_clear()
+                                     #screen_clear()
                                      emptyCells=getEmptyCells(board,N)
                                      
                                      
@@ -292,9 +292,9 @@ def getComputerMove_random (board, N, player):
                                                
                                          
                                           
-                                     screen_clear()
+                                    # screen_clear()
                                      
-                                     drawNimPalette(board,N)
+                                     #drawNimPalette(board,N)
                                      finish = True
 
 def getComputerMove_firstfit (board, N, player):
@@ -313,9 +313,9 @@ def getComputerMove_firstfit (board, N, player):
                          numMove=2 #random.randint(0,2)
 
                   #First move (player has to play this one)
-                         screen_clear()
+                         #screen_clear()
                          finish = firstMoveRandChecks(board,N,move,player)
-                         drawNimPalette(board,N)
+                         #drawNimPalette(board,N)
                          moveCounter += 1
                          if numMove==0 or finish==True:
                                    finish=True
@@ -323,7 +323,7 @@ def getComputerMove_firstfit (board, N, player):
                         
                            #Second move
                          else:
-                                screen_clear()
+                                #screen_clear()
                                 emptyCells=getEmptyCells(board,N)
                                 
                                 
@@ -342,7 +342,7 @@ def getComputerMove_firstfit (board, N, player):
                                                     i+=1
                                                 
                                         
-                                drawNimPalette(board,N)
+                                #drawNimPalette(board,N)
                                 moveCounter += 1
                                 if numMove==1 or finish==True:
                                    finish=True
@@ -350,7 +350,7 @@ def getComputerMove_firstfit (board, N, player):
 
                                 elif numMove==2:
                                    #Third move (last move)
-                                     screen_clear()
+                                     #screen_clear()
                                      emptyCells=getEmptyCells(board,N)
                                      
                                      
@@ -369,9 +369,9 @@ def getComputerMove_firstfit (board, N, player):
                                                
                                          
                                           
-                                     screen_clear()
+                                     #screen_clear()
                                      
-                                     drawNimPalette(board,N)
+                                     #drawNimPalette(board,N)
                                      finish = True
 
 def getComputerMove_copycat (board, N, player, opponentMove):
@@ -431,7 +431,52 @@ def getComputerMove_copycat (board, N, player, opponentMove):
         #If not play random move
         else:
                 getComputerMove_random(board, N, player)
-        drawNimPalette(board,N)
+        #drawNimPalette(board,N)
+
+def getComputerMove_winmove(board, N, player):
+        emptyCellNum = getEmptyCellNum(board, N)
+        emptyCells = getEmptyCells(board,N)
+
+        if emptyCellNum == 1:#If only one cell empty then play this-one
+                getComputerMove_random(board, N, player)
+        
+        elif emptyCellNum == 2:
+               if winMoveCheck2Cells(board, N): #Check if you can win
+                       for cell in emptyCells:
+                                board[cell] = player
+                                board[0]+=1
+               else:#play randomly
+                       getComputerMove_random(board, N,player)
+        
+        elif emptyCellNum == 3:
+                #Board to test next move
+                tempboard = board.copy()
+
+                #Try every possible cell
+                for cell in emptyCells:
+                        tempboard[cell]= player
+                        if not winMoveCheck2Cells(tempboard, N):
+                                board[cell] = player
+                                board[0]+=1
+                                break
+                        #reset tempboard
+                        tempboard = board.copy()                                
+
+def winMoveCheck2Cells(board, N):
+        emptyCells = getEmptyCells(board, N) #Find empty cells
+
+        #Check if they are squential and not on the diagonal
+        if isSequential(emptyCells[0], emptyCells[1], N):
+                diagonal = False
+                for cell in emptyCells:
+                        row, col = getRowAndColumn(cell,N)
+                        if row==col: diagonal=True
+                if not diagonal:
+                        return True
+                else:
+                        return False              
+        else:#Else play randomly
+                return False
 
 def firstMoveRandChecks(board, N, move,player): #Checks if the first move is valid
 
@@ -580,7 +625,7 @@ def getEmptyCellNum(board,N):
 
 def getEmptyCells(board,N):
         cells =[]
-        for i in range(1,N*N):
+        for i in range(1,N*N+1):
                 if board[i] != 'R' and board[i] != 'G':
                         cells.append(i)
         
@@ -697,13 +742,17 @@ while playNewGameFlag:
                         latestPlayerMove=play(nimBoard,N,playerLetter)
                         turn = 'computer'
                 else: 
-                        if computerStrategy == 'random':
-                               getComputerMove_random(nimBoard,N,computerLetter)
-                        elif computerStrategy == 'first free':
-                               getComputerMove_firstfit(nimBoard,N,computerLetter)
+                        if getEmptyCellNum(nimBoard,N) <= 3:
+                                getComputerMove_winmove(nimBoard,N,playerLetter)
                         else:
-                                getComputerMove_copycat(nimBoard,N,computerLetter, latestPlayerMove)
-
+                                if computerStrategy == 'random':
+                                        getComputerMove_random(nimBoard,N,computerLetter)
+                                elif computerStrategy == 'first free':
+                                        getComputerMove_firstfit(nimBoard,N,computerLetter)
+                                else:
+                                        getComputerMove_copycat(nimBoard,N,computerLetter, latestPlayerMove)
+                        screen_clear()
+                        drawNimPalette(nimBoard,N)
                         turn = 'player'
 
                 gameon = not isBoardFull(nimBoard, N)
