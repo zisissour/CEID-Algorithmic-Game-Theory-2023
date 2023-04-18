@@ -576,7 +576,6 @@ while playNewGameFlag:
                                 getComputerMove_copycat(nimBoard,N,computerLetter, latestPlayerMove)
 
                         turn = 'player'
-                        latestPlayerMove = []
 
                 gameon = not isBoardFull(nimBoard, N)
         
