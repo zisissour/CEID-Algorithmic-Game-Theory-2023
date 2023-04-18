@@ -219,7 +219,7 @@ def play(board, N, player):
                         print(bcolors.ERROR+"Input must be an integer"+bcolors.ENDC) 
 
 
-def getComputerMove_random (board, N, player):
+def getComputerMove_firstfit (board, N, player):
    finish = False 
    
    moveCounter = 0 #Moves counter (up to 2 {three moves})
@@ -228,11 +228,11 @@ def getComputerMove_random (board, N, player):
                emptyCells=getEmptyCells(board,N)
                if not emptyCells:
                          finish=True
-
+                         break
 
                else :
-                         move.append(random.choice(emptyCells)) 
-                         numMove=random.randint(0,2)
+                         move.append(emptyCells[0]) 
+                         numMove=2 #random.randint(0,2)
 
                   #First move (player has to play this one)
                          screen_clear()
@@ -249,18 +249,20 @@ def getComputerMove_random (board, N, player):
                                 emptyCells=getEmptyCells(board,N)
                                 
                                 
-                                for i in range(1,len(emptyCells)):
+                                for i in range(len(emptyCells)):
                                          row,column=getRowAndColumn(emptyCells[i],N)
                                          if row!=column :
                                             if isSequential(emptyCells[i],move[0],N):
                                                      move.append(emptyCells[i])
                                                      board[move[1]] = player
                                                      board[0] +=1
-                                                    
+                                                     finish=False
                                                      break
                                                                  
-                                         else :
-                                                i+=1
+                                            else :
+                                                    finish=True
+                                                    i+=1
+                                                
                                         
                                 drawNimPalette(board,N)
                                 moveCounter += 1
@@ -274,16 +276,96 @@ def getComputerMove_random (board, N, player):
                                      emptyCells=getEmptyCells(board,N)
                                      
                                      
-                                     for i in range(1,len(emptyCells)):
+                                     for i in range(len(emptyCells)):
                                          row,column=getRowAndColumn(emptyCells[i],N)
                                          if row!=column :
-                                            if isSequential2Cells(emptyCells[i],move[0],move[1], N):
-                                                  board[emptyCells[i]] = player
+                                            move.append(emptyCells[i])
+                                            if isSequential2Cells(move[0],move[1],move[2], N):     
+                                                  board[move[2]] = player
                                                   board[0] +=1
-                                                 
+                                                  finish=True
                                                   break
-                                         else :
-                                                  i+=1
+                                            else :
+                                                    finish=True
+                                                    i+=1
+                                               
+                                         
+                                          
+                                     screen_clear()
+                                     
+                                     drawNimPalette(board,N)
+                                     finish = True
+
+def getComputerMove_random (board, N, player):
+   finish = False 
+   
+   moveCounter = 0 #Moves counter (up to 2 {three moves})
+   move = [] #Array that holds the player's moves
+   while not finish:
+               emptyCells=getEmptyCells(board,N)
+               if not emptyCells:
+                         finish=True
+                         break
+
+               else :
+                         move.append(random.choice(emptyCells)) 
+                         numMove=2 #random.randint(0,2)
+
+                  #First move (player has to play this one)
+                         screen_clear()
+                         finish = firstMoveRandChecks(board,N,move,player)
+                         drawNimPalette(board,N)
+                         moveCounter += 1
+                         if numMove==0 or finish==True:
+                                   finish=True
+                                   break
+                        
+                           #Second move
+                         else:
+                                screen_clear()
+                                emptyCells=getEmptyCells(board,N)
+                                
+                                
+                                for i in range(len(emptyCells)):
+                                         row,column=getRowAndColumn(emptyCells[i],N)
+                                         if row!=column :
+                                            if isSequential(emptyCells[i],move[0],N):
+                                                     move.append(emptyCells[i])
+                                                     board[move[1]] = player
+                                                     board[0] +=1
+                                                     finish=False
+                                                     break
+                                                                 
+                                            else :
+                                                    finish=True
+                                                    i+=1
+                                                
+                                        
+                                drawNimPalette(board,N)
+                                moveCounter += 1
+                                if numMove==1 or finish==True:
+                                   finish=True
+                                   break
+
+                                elif numMove==2:
+                                   #Third move (last move)
+                                     screen_clear()
+                                     emptyCells=getEmptyCells(board,N)
+                                     
+                                     
+                                     for i in range(len(emptyCells)):
+                                         row,column=getRowAndColumn(emptyCells[i],N)
+                                         if row!=column :
+                                            move.append(emptyCells[i])
+                                            if isSequential2Cells(move[0],move[1],move[2], N):     
+                                                  board[move[2]] = player
+                                                  board[0] +=1
+                                                  finish=True
+                                                  break
+                                            else :
+                                                    finish=True
+                                                    i+=1
+                                               
                                          
                                           
                                      screen_clear()
@@ -603,7 +685,7 @@ while playNewGameFlag:
                         play(nimBoard,N,playerLetter)
                         turn = 'computer'
                 else: 
-                       getComputerMove_random(nimBoard,N,computerLetter)
+                       getComputerMove_firstfit(nimBoard,N,computerLetter)
                       # play(nimBoard,N,computerLetter) #Wiil be replaced
                        turn = 'player'
 
