@@ -227,6 +227,90 @@ def play(board, N, player):
         #Return player's moves
         return move
 
+def getComputerMove_firstfit(board, N, player):
+   
+   finish = False 
+   
+   moveCounter = 0 #Moves counter (up to 2 {three moves})
+   move = [] #Array that holds the player's moves
+   while not finish:
+               
+               emptyCells=getEmptyCells(board,N)
+
+               if not emptyCells:
+                         finish=True
+                         break
+               
+               else :
+                         move.append(emptyCells[0]) 
+                         numMove=random.randint(0,2)
+                         
+
+                  #First move (player has to play this one)
+                         screen_clear()
+                         finish = firstMoveRandChecks(board,N,move,player)
+                         drawNimPalette(board,N)
+                         moveCounter += 1
+
+                         if numMove==0 or finish==True:
+                                   finish=True
+                                   break
+                        
+                           #Second move
+                         else:
+                                colOrRow=random.randint(0,1) # 0->column 1->row
+                                screen_clear()
+                                emptyCells=getEmptyCells(board,N)
+                                sameColEmpty=[]
+                                sameRowEmpty=[]
+                                for i in range(len(emptyCells)):
+                                      row1,column1=getRowAndColumn(emptyCells[i],N)
+                                      row2,column2=getRowAndColumn(move[0],N)
+                                      if colOrRow==0:
+                                         if column1==column2:
+                                                 sameColEmpty.append(emptyCells[i])
+                                                 finish= secondMoveRandChecks(sameColEmpty,move,board,player)
+                                                 break
+                                      else:
+                                         if row1==row2:
+                                                 sameRowEmpty.append(emptyCells[i])
+                                                 finish= secondMoveRandChecks(sameRowEmpty,move,board,player)
+                                                 break
+                              
+                               
+                                                
+                                        
+                                drawNimPalette(board,N)
+                                moveCounter += 1
+
+                                if numMove==1 or finish==True:
+                                   finish=True
+                                   break
+
+                                elif numMove==2:
+                                   #Third move (last move)
+                                     screen_clear()
+                                     emptyCells=getEmptyCells(board,N)
+                                     sameColEmpty=[]
+                                     sameRowEmpty=[]
+                                     for i in range(len(emptyCells)):
+                                             row1,column1=getRowAndColumn(emptyCells[i],N)
+                                             row2,column2=getRowAndColumn(move[0],N)
+                                             if colOrRow==0:
+                                                    if column1==column2:
+                                                         sameColEmpty.append(emptyCells[i])
+                                                         finish= thirdMoveRandChecks(sameColEmpty,move,board,player)
+                                                         break
+                                             else:
+                                                 if row1==row2:
+                                                       sameRowEmpty.append(emptyCells[i])
+                                                       finish= thirdMoveRandChecks(sameRowEmpty,move,board,player)
+                                                       break
+                                     screen_clear()
+                                     
+                                     drawNimPalette(board,N)
+                                     finish = True
+
 def getComputerMove_random (board, N, player):
    finish = False 
    
@@ -243,11 +327,12 @@ def getComputerMove_random (board, N, player):
                else :
                          move.append(random.choice(emptyCells)) 
                          numMove=random.randint(0,2)
+                         
 
                   #First move (player has to play this one)
-                         #screen_clear()
+                         screen_clear()
                          finish = firstMoveRandChecks(board,N,move,player)
-                         #drawNimPalette(board,N)
+                         drawNimPalette(board,N)
                          moveCounter += 1
 
                          if numMove==0 or finish==True:
@@ -256,14 +341,29 @@ def getComputerMove_random (board, N, player):
                         
                            #Second move
                          else:
-                                #screen_clear()
+                                colOrRow=random.randint(0,1) # 0->column 1->row
+                                screen_clear()
                                 emptyCells=getEmptyCells(board,N)
-                                
-                                finish= secondMoveRandChecks(emptyCells,move,board,player)
+                                sameColEmpty=[]
+                                sameRowEmpty=[]
+                                for i in range(len(emptyCells)):
+                                      row1,column1=getRowAndColumn(emptyCells[i],N)
+                                      row2,column2=getRowAndColumn(move[0],N)
+                                      if colOrRow==0:
+                                         if column1==column2:
+                                                 sameColEmpty.append(emptyCells[i])
+                                                 finish= secondMoveRandChecks(sameColEmpty,move,board,player)
+                                                 break
+                                      else:
+                                         if row1==row2:
+                                                 sameRowEmpty.append(emptyCells[i])
+                                                 finish= secondMoveRandChecks(sameRowEmpty,move,board,player)
+                                                 break
+                              
                                
                                                 
                                         
-                                #drawNimPalette(board,N)
+                                drawNimPalette(board,N)
                                 moveCounter += 1
 
                                 if numMove==1 or finish==True:
@@ -272,62 +372,26 @@ def getComputerMove_random (board, N, player):
 
                                 elif numMove==2:
                                    #Third move (last move)
-                                     #screen_clear()
+                                     screen_clear()
                                      emptyCells=getEmptyCells(board,N)
+                                     sameColEmpty=[]
+                                     sameRowEmpty=[]
+                                     for i in range(len(emptyCells)):
+                                             row1,column1=getRowAndColumn(emptyCells[i],N)
+                                             row2,column2=getRowAndColumn(move[0],N)
+                                             if colOrRow==0:
+                                                    if column1==column2:
+                                                         sameColEmpty.append(emptyCells[i])
+                                                         finish= thirdMoveRandChecks(sameColEmpty,move,board,player)
+                                                         break
+                                             else:
+                                                 if row1==row2:
+                                                       sameRowEmpty.append(emptyCells[i])
+                                                       finish= thirdMoveRandChecks(sameRowEmpty,move,board,player)
+                                                       break
+                                     screen_clear()
                                      
-                                     finish=thirdMoveRandChecks(emptyCells,move,board,player)
-                                           
-                                     #screen_clear()
-                                     
-                                     #drawNimPalette(board,N)
-                                     finish = True
-
-def getComputerMove_firstfit (board, N, player):
-   finish = False 
-   
-   moveCounter = 0 #Moves counter (up to 2 {three moves})
-   move = [] #Array that holds the player's moves
-   while not finish:
-               emptyCells=getEmptyCells(board,N)
-               if not emptyCells:
-                         finish=True
-                         break
-
-               else :
-                         move.append(emptyCells[0]) 
-                         numMove=random.randint(0,2)
-
-                  #First move (player has to play this one)
-                        # screen_clear()
-                         finish = firstMoveRandChecks(board,N,move,player)
-                         #drawNimPalette(board,N)
-                         moveCounter += 1
-                         if numMove==0 or finish==True:
-                                   finish=True
-                                   break
-                        
-                           #Second move
-                         else:
-                                #screen_clear()
-                                emptyCells=getEmptyCells(board,N)
-                                
-                                
-                                finish= secondMoveRandChecks(emptyCells,move,board,player)
-                                                
-                                        
-                                #drawNimPalette(board,N)
-                                moveCounter += 1
-                                if numMove==1 or finish==True:
-                                   finish=True
-                                   break
-
-                                elif numMove==2:
-                                   #Third move (last move)
-                                     #screen_clear()
-                                     emptyCells=getEmptyCells(board,N)    
-                                     finish=thirdMoveRandChecks(emptyCells,move,board,player)                                                
-                                     #screen_clear()  
-                                     #drawNimPalette(board,N)
+                                     drawNimPalette(board,N)
                                      finish = True
 
 def getComputerMove_copycat (board, N, player, opponentMove):
@@ -416,7 +480,56 @@ def getComputerMove_winmove(board, N, player):
                                 board[0]+=1
                                 break
                         #reset tempboard
-                        tempboard = board.copy()                                
+                        tempboard = board.copy()            
+
+        elif emptyCellNum == 4:
+                played = winMoveCheck4Cells(board,N,player)                                                          
+
+                if not played:
+                        getComputerMove_random(board, N, player)
+        
+        elif emptyCellNum == 5:
+
+                tempboard = board.copy()
+                played = False
+
+                for cell1 in emptyCells:
+                        if played: break
+                        row, col = getRowAndColumn(cell1, N)
+                        if row!=col:#Check diagonal
+                                for cell2 in emptyCells:
+                                        if played: break
+                                        row, col = getRowAndColumn(cell2, N)
+                                        if row!=col:#Check diagonal
+                                                if isSequential(cell1,cell2,N):
+                                                        for cell3 in emptyCells:
+                                                                if cell3 == cell1 or cell3 == cell2: continue
+                                                                row, col = getRowAndColumn(cell3,N)
+                                                                if row!=col:#Check diagonal
+                                                                        if isSequential2Cells(cell1,cell2,cell3,N):
+                                                                                tempboard[cell1] = player
+                                                                                tempboard[cell2] = player
+                                                                                tempboard[cell3] = player
+                                                                                if not winMoveCheck2Cells(tempboard, N):
+                                                                                        board[cell1] = player
+                                                                                        board[cell2] = player
+                                                                                        board[cell3] = player
+                                                                                        board[0]+=3
+                                                                                        played = True
+                                                                                        break
+                                                                                #Reset temp board
+                                                                                tempboard = board.copy()
+
+                if not played:
+                        for cell in emptyCells:
+                                tempboard[cell] = player
+                                if not winMoveCheck4Cells(tempboard, N, player):
+                                        board[cell] = player
+                                        board[0]+=1
+                                        played = True
+                                        break
+                                #Reset temp board
+                                tempboard=board.copy()
 
 def winMoveCheck2Cells(board, N):
         emptyCells = getEmptyCells(board, N) #Find empty cells
@@ -433,6 +546,74 @@ def winMoveCheck2Cells(board, N):
                         return False              
         else:#Else play randomly
                 return False
+
+def winMoveCheck4Cells(board, N, player):
+        emptyCells = getEmptyCells(board,N)
+
+        played = False
+        #Board to test next move
+        tempboard = board.copy()     
+
+                #Get every compination of empty cells
+        for cell1 in emptyCells:
+                if played: break
+                row, col = getRowAndColumn(cell1, N)
+                if row!=col:#Check diagonal
+                        for cell2 in emptyCells:
+                                row, col = getRowAndColumn(cell2, N)
+                                if row!=col:#Check diagonal
+
+                                #If they are sequential, 
+                                #check if the move leads to a lost game
+
+                                        if isSequential(cell1,cell2,N):
+                                                tempboard[cell1]=player
+                                                tempboard[cell2] = player
+
+                                                #If lost game comes up play the move
+                                                if not winMoveCheck2Cells(tempboard, N): 
+                                                        board[cell1] = player
+                                                        board[cell2] = player
+                                                        board[0]+=2
+                                                        played = True
+                                                        break   
+                                                #Reset the temp board
+                                                tempboard = board.copy()   
+        return played
+
+def thirdMoveRandChecks(emptyCells,move,board,player):
+        finish=True
+        for i in range(len(emptyCells)):
+                                         
+                                         row,column=getRowAndColumn(emptyCells[i],N)
+                                         if row!=column :
+                                            move.append(emptyCells[i])
+                                            if isSequential2Cells(move[0],move[1],move[2], N):     
+                                                  board[move[2]] = player
+                                                  board[0] +=1
+                                                  finish=True
+                                                  break
+                                            else :
+                                                    finish=True
+                                                    
+        return finish
+
+def secondMoveRandChecks(emptyCells,move,board,player): 
+       finish=True
+       for i in range(len(emptyCells)):
+                                         
+                                         row,column=getRowAndColumn(emptyCells[i],N)
+                                         if row!=column :
+                                            if isSequential(emptyCells[i],move[0],N):
+                                                     move.append(emptyCells[i])
+                                                     board[move[1]] = player
+                                                     board[0] +=1
+                                                     finish=False
+                                                     break
+                                                                  
+                                            
+                                                    
+       return finish
 
 def firstMoveRandChecks(board, N, move,player): #Checks if the first move is valid
 
@@ -451,39 +632,6 @@ def firstMoveRandChecks(board, N, move,player): #Checks if the first move is val
           endflag = True
  
         return  endflag
-
-def secondMoveRandChecks(emptyCells,move,board,player): 
-       for i in range(len(emptyCells)):
-                                         finish=False
-                                         row,column=getRowAndColumn(emptyCells[i],N)
-                                         if row!=column :
-                                            if isSequential(emptyCells[i],move[0],N):
-                                                     move.append(emptyCells[i])
-                                                     board[move[1]] = player
-                                                     board[0] +=1
-                                                     finish=False
-                                                     break
-                                                                 
-                                            else :
-                                                    finish=True
-                                                    i+=1
-                                         return finish
-
-def thirdMoveRandChecks(emptyCells,move,board,player):
-        for i in range(len(emptyCells)):
-                                         finish=False
-                                         row,column=getRowAndColumn(emptyCells[i],N)
-                                         if row!=column :
-                                            move.append(emptyCells[i])
-                                            if isSequential2Cells(move[0],move[1],move[2], N):     
-                                                  board[move[2]] = player
-                                                  board[0] +=1
-                                                  finish=True
-                                                  break
-                                            else :
-                                                    finish=True
-                                                    i+=1
-                                         return finish
 
 def firstMoveChecks(board, N, move,player): #Checks if the first move is valid
 
@@ -734,7 +882,7 @@ while playNewGameFlag:
                         latestPlayerMove=play(nimBoard,N,playerLetter)
                         turn = 'computer'
                 else: 
-                        if getEmptyCellNum(nimBoard,N) <= 3:
+                        if getEmptyCellNum(nimBoard,N) <= 5:
                                 getComputerMove_winmove(nimBoard,N,computerLetter)
                         else:
                                 if computerStrategy == 'random':
