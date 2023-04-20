@@ -227,7 +227,7 @@ def play(board, N, player):
         #Return player's moves
         return move
 
-def getComputerMove_firstfit(board, N, player):
+def getComputerMove_firstfit(board, N, player, moves = 0):
    
    finish = False 
    
@@ -243,7 +243,10 @@ def getComputerMove_firstfit(board, N, player):
                
                else :
                          move.append(emptyCells[0]) 
-                         numMove=random.randint(0,2)
+                         if moves == 0:
+                                numMove = random.randint(0,2)
+                         else:
+                                numMove = moves-1
                          
 
                   #First move (player has to play this one)
@@ -446,8 +449,8 @@ def getComputerMove_copycat (board, N, player, opponentMove):
                                         board[move] = player
                                         board[0] +=1
 
-                        else: #play first fit
-                                getComputerMove_firstfit(board, N, player) #TO BE REPLACED
+                        else: #play first fit up to the same num of moves as the opponent
+                                getComputerMove_firstfit(board, N, player,len(opponentMove))
         #If not play random move
         else:
                 getComputerMove_random(board, N, player)
