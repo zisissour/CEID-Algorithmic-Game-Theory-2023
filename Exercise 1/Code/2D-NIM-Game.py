@@ -783,7 +783,7 @@ print(bcolors.HEADER + """
 ---------------------------------------------------------------------
 STUDENT NAME:           Zisis Sourlas
 STUDENT AM:             1072477
-JOINT WORK WITH:        Michail Mpallas <AM>
+JOINT WORK WITH:        Michail Mpallas 1072599
 ---------------------------------------------------------------------
 """ + bcolors.ENDC)
 
