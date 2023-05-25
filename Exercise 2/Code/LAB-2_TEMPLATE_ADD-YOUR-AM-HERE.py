@@ -338,8 +338,44 @@ def drawBimatrix(m,n,R,C):
 
 # ALG0: Solver for ZERO-SUM games...
 
+
+
+
 def checkForPNE(m,n,R,C):
-    print(bcolors.TODO + '''
+ maxR=[]
+ maxC=[]
+ pne=[]
+ max1=0
+ max2=0
+ for j in range(n):
+     for i in range(m):
+       if max1<R[i][j]:
+        max1=R[i][j]
+     maxR.append(max1)
+      
+ for i in range(m)  :
+     for j in range(n):
+         if max2<C[i][j]:
+           max2=C[i][j]
+     maxC.append(max2)
+
+ for i in range(m):
+     for j in range(n):
+         if R[i][j]==maxR[j] and C[i][j]==maxC[i]:  
+          pne.append((i+1,j+1))
+
+
+ if not pne:
+   print("No equilibria")
+   return(0,0)
+ 
+ else:
+     print("Equilibria")
+     return pne
+ #else:
+   #  print("The equilibria are:") 
+  #   return pne
+  #  print(bcolors.TODO + '''
     # ROUTINE: checkForPNE
     # PRE:  Two mxn payoff matrices R,C, with real values (not necessarily in [0,1])
     # METHOD:
@@ -347,7 +383,7 @@ def checkForPNE(m,n,R,C):
     #       a pair of actions (i,j) that constitute a pure NE.
     #''' + bcolors.ENDC)
 
-    return(0,0)
+  #  return(0,0)
 
 def solveZeroSumGame(m,n,A):
     print(bcolors.IMPLEMENTED + '''
@@ -663,8 +699,8 @@ while EXITCODE < 0:
 drawBimatrix(m,n,R,C)
 
 ### SEEKING FOR PNE IN THE GAME (R,C)...
-(i,j) = checkForPNE(m,n,R,C)
-
+pne=[]
+pne= checkForPNE(m,n,R,C)
 if (i,j) != (0,0):
     print( bcolors.MSG + "A pure NE (",i,",",j,") was discovered for (R,C)." + bcolors.ENDC )
     exit()
