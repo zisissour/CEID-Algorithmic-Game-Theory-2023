@@ -339,25 +339,29 @@ def drawBimatrix(m,n,R,C):
 # ALG0: Solver for ZERO-SUM games...
 
 
-
-
 def checkForPNE(m,n,R,C):
  maxR=[]
  maxC=[]
  pne=[]
  max1=0
  max2=0
+
+
  for j in range(n):
      for i in range(m):
        if max1<R[i][j]:
         max1=R[i][j]
+
      maxR.append(max1)
+     max1=0
       
  for i in range(m)  :
      for j in range(n):
          if max2<C[i][j]:
            max2=C[i][j]
+
      maxC.append(max2)
+     max2=0
 
  for i in range(m):
      for j in range(n):
@@ -366,24 +370,10 @@ def checkForPNE(m,n,R,C):
 
 
  if not pne:
-   print("No equilibria")
    return(0,0)
  
  else:
-     print("Equilibria")
      return pne
- #else:
-   #  print("The equilibria are:") 
-  #   return pne
-  #  print(bcolors.TODO + '''
-    # ROUTINE: checkForPNE
-    # PRE:  Two mxn payoff matrices R,C, with real values (not necessarily in [0,1])
-    # METHOD:
-    # POST: (0,0), if no pure NE exists for(R,C), or else 
-    #       a pair of actions (i,j) that constitute a pure NE.
-    #''' + bcolors.ENDC)
-
-  #  return(0,0)
 
 def solveZeroSumGame(m,n,A):
     print(bcolors.IMPLEMENTED + '''
@@ -471,15 +461,44 @@ def interpretReducedStrategiesForOriginalGame(reduced_x,reduced_y,reduced_R,redu
     return(x,y)
 
 def computeApproximationGuarantees(m,n,R,C,x,y):
-
-    print(bcolors.TODO + '''
-    ROUTINE: computeApproximationGuarantees
-    PRE:    A bimatrix game, described by the two payoff matrices, with payoff values in [0,1].
-            A profile (x,y) of strategies for the two players.
-    POST:   The two NASH approximation guarantees, epsAPPROX and epsWSNE in [0,1].''' + bcolors.ENDC)
     
     epsAPPROX = 1
     epsWSNE = 1
+
+    #Make sure everything is a numpy array
+    R=np.array(R)
+    C=np.array(C)
+    x=np.array(x)
+    y=np.array(y)
+
+    Ry = np.matmul(R,y)
+    xC = np.matmul(x.T,C)
+        
+    #Calculating epsAPPROX
+    xRy = np.matmul(x.T,Ry)
+    xCy = np.matmul(xC,y)
+
+    eps1 = max(Ry) - xRy
+    eps2 = max(xC) - xCy
+    epsAPPROX = max(eps1, eps2)
+
+    #Calculating epsWSNE
+    
+    Ry_i=[]
+    for i in range(m):
+       if x[i]>0:
+          Ry_i.append(np.matmul(R[i],y))
+    
+    Cx_j = []
+    for j in range(n):
+       if y[j]>0:
+          Cx_j.append(np.matmul(C.T[j],x))
+
+    eps1 = max(Ry) - min(Ry_i)
+    eps2 = max(xC) - min(Cx_j)
+
+    epsWSNE = max(eps1, eps2)
+
     return(epsAPPROX,epsWSNE)
 
 def approxNEConstructionDMP(m,n,R,C):
