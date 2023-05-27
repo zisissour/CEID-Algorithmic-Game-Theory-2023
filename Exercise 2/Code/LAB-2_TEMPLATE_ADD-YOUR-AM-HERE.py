@@ -5,7 +5,7 @@ from numpy.linalg import matrix_rank
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from scipy.optimize import linprog
-
+import random
 import os
 
 ############################### FG COLOR DEFINITIONS ###############################
@@ -502,20 +502,30 @@ def computeApproximationGuarantees(m,n,R,C,x,y):
     return(epsAPPROX,epsWSNE)
 
 def approxNEConstructionDMP(m,n,R,C):
-    print(bcolors.TODO + '''
-    ROUTINE: approxNEConstructionDMP
-    PRE:    A bimatrix game, described by the two payoff matrices, with payoff values in [0,1].
-    POST:   A profile of strategies (x,y) produced by the DMP algorithm.''' + bcolors.ENDC)
-    
-    #... provide your code here, commenting all previous (unnecessary) prints ...
+    #Make sure that everything is an numpy array
+    R = np.array(R)
+    C = np.array(C)
 
-    # these steps are just to do something 
+    #Get random action for row player
+    s = random.randint(0,m-1)
 
-    x =(1/m) * np.ones(m)
-    y = (1/n) * np.ones(n)
+    #Get PBR for column player
+    mx = max(C[s])
+    t = random.choice([i for i, j in enumerate(C[s]) if j == mx]) #Choose randomly if >1 PBRs
+
+    #Get PBR for row player
+    mx = max(R.T[t])
+    r = random.choice([i for i, j in enumerate(R.T[t]) if j == mx]) #Choose randomly if >1 PBRs
+
+    #Initialize output
+    x=np.zeros(m)
+    y=np.zeros(n)
+
+    y[t] = 1
+    x[s] += 0.5
+    x[r] += 0.5
+
     epsAPPROX,epsWSNE = computeApproximationGuarantees(m,n,R,C,x,y)
-
-    # these steps are just to do something 
 
     return(x,y,epsAPPROX,epsWSNE)
 
@@ -718,8 +728,8 @@ while EXITCODE < 0:
 drawBimatrix(m,n,R,C)
 
 ### SEEKING FOR PNE IN THE GAME (R,C)...
-pne=[]
-pne= checkForPNE(m,n,R,C)
+
+(i,j)= checkForPNE(m,n,R,C)
 if (i,j) != (0,0):
     print( bcolors.MSG + "A pure NE (",i,",",j,") was discovered for (R,C)." + bcolors.ENDC )
     exit()
@@ -743,6 +753,7 @@ print("\tDMPx =",DMPx,"\n\tDMPy =",DMPy)
 print("\tDMPepsAPPROX =",DMPepsAPPROX,".\tDMPepsWSNE =",DMPepsWSNE,"." + bcolors.ENDC)
 print( PLUSLINE + bcolors.ENDC )
 
+"""
 ### EXECUTING FICTITIOUS PLAY ALGORITHM...
 x, y, FPepsAPPROX, FPepsWSNE = approxNEConstructionFP(reduced_m,reduced_n,reduced_R,reduced_C)
 FPx, FPy = interpretReducedStrategiesForOriginalGame(x, y, R, C, reduced_R, reduced_C)
@@ -760,4 +771,4 @@ print("\tConstructed solution for DEL:")
 print(MINUSLINE)
 print("\tDELx =",DELx,"\n\tDELy =",DELy)
 print("\tDELepsAPPROX =",DELepsAPPROX,".\tDELepsWSNE =",DELepsWSNE,".")
-print( PLUSLINE + bcolors.ENDC )
+print( PLUSLINE + bcolors.ENDC )"""

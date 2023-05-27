@@ -1,12 +1,7 @@
 import numpy as np
-from numpy import genfromtxt
-from numpy.linalg import matrix_rank
 
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-from scipy.optimize import linprog
 
-import os
+import random
 
 def checkForPNE(m,n,R,C):
  maxR=[]
@@ -92,8 +87,44 @@ def computeApproximationGuarantees(m,n,R,C,x,y):
     return(epsAPPROX,epsWSNE)
 
 
-x = [0.5, 0.5]
-y = [0,1,0,0]
+#x = [0.5, 0.5]
+#y = [0,1,0,0]
 
-a = computeApproximationGuarantees(2,4,r,c,x,y)
-print(a)
+#a = computeApproximationGuarantees(2,4,r,c,x,y)
+#print(a)
+
+
+def approxNEConstructionDMP(m,n,R,C):
+    #Make sure that everything is an numpy array
+    R = np.array(R)
+    C = np.array(C)
+
+
+    #Get random action for row player
+    s = random.randint(0,m-1)
+
+    #Get PBR for column player
+    mx = max(C[s])
+    t = random.choice([i for i, j in enumerate(C[s]) if j == mx]) #Choose randomly if >1 PBRs
+
+    #Get PBR for row player
+    mx = max(R.T[t])
+    r = random.choice([i for i, j in enumerate(R.T[t]) if j == mx]) #Choose randomly if >1 PBRs
+
+    #Initialize output
+    x=np.zeros(m)
+    y=np.zeros(n)
+
+    y[t] = 1
+    x[s] += 0.5
+    x[r] += 0.5
+
+    epsAPPROX,epsWSNE = computeApproximationGuarantees(m,n,R,C,x,y)
+
+
+
+    return(x,y,epsAPPROX,epsWSNE)
+
+a = approxNEConstructionDMP(2,4,r,c)
+
+print(a[1])
