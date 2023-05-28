@@ -125,6 +125,57 @@ def approxNEConstructionDMP(m,n,R,C):
 
     return(x,y,epsAPPROX,epsWSNE)
 
-a = approxNEConstructionDMP(2,4,r,c)
 
-print(a[1])
+def approxNEConstructionFPUNI(m,n,R,C):
+    T=100
+
+    #Make sure everything iS an numpy array
+    R=np.array(R)
+    C=np.array(C)
+
+    x=np.array([])
+    y=np.array([])
+    x_t = []
+    y_t = []
+
+    #First Move
+    x=np.ones(m)/m
+    x_t.append(x)
+
+    y=np.ones(n)/n
+    y_t.append(y)
+
+    for t in range(1,T):
+        x=np.zeros(m)
+        Ry = np.matmul(R,y_t[t-1])
+
+        mx = max(Ry)
+        mx_counter = 0
+        for i, j in enumerate(Ry):
+            if j == mx:
+                x[i]=1
+                mx_counter += 1
+        x = x/mx_counter           
+
+        x_t.append(((t-1)*x_t[t-1] + x)/t)
+
+        y=np.zeros(n)
+        xC = np.matmul(x_t[t-1].T,C)
+        
+        mx = max(xC)
+        mx_counter = 0
+        for i, j in enumerate(xC):
+           if j == mx:
+              y[i]=1
+              mx_counter += 1
+        y = y/mx_counter
+
+        y_t.append(((t-1)*y_t[t-1] + y)/t)
+
+    epsAPPROX, epsWSNE = computeApproximationGuarantees(m,n,R,C,x_t[T-1],y_t[T-1])
+
+    return(x_t[T-1],y_t[T-1],epsAPPROX,epsWSNE)
+
+
+a = approxNEConstructionFPUNI(2,4,r,c)
+print(a)

@@ -529,23 +529,88 @@ def approxNEConstructionDMP(m,n,R,C):
 
     return(x,y,epsAPPROX,epsWSNE)
 
-def approxNEConstructionFP(m,n,R,C):
-    print(bcolors.TODO + '''
-    ROUTINE: approxNEConstructionFP
-    PRE:    A bimatrix game, described by the two payoff matrices, with payoff values in [0,1].
-    POST:   A profile of strategies (x,y) produced by the FICTITIOUS PLAY algorithm.''' + bcolors.ENDC)
-    
-    #... provide your code here, commenting all previous (unnecessary) prints ...
+def approxNEConstructionFPPBR(m,n,R,C):
+    T=1000
 
-    # these steps are just to do something 
+    #Make sure everything iS an numpy array
+    R=np.array(R)
+    C=np.array(C)
 
-    x =(1/m) * np.ones(m).transpose()
-    y = (1/n) * np.ones(n).transpose()
-    epsAPPROX,epsWSNE = computeApproximationGuarantees(m,n,R,C,x,y)
+    x=np.array([])
+    y=np.array([])
+    x_t = []
+    y_t = []
 
-    # these steps are just to do something 
+    #First Move
+    x=np.zeros(m)
+    x[0]=1
+    x_t.append(x)
+    y=np.zeros(n)
+    y[0]=1
+    y_t.append(y)
 
-    return(x,y,epsAPPROX,epsWSNE)
+    for t in range(1,T):
+        x=np.zeros(m)
+        x[np.argmax(np.matmul(R,y_t[t-1]))] = 1
+        x_t.append(((t-1)*x_t[t-1] + x)/t)
+
+        y=np.zeros(n)
+        y[np.argmax(np.matmul(x_t[t-1].T,C))] = 1
+        y_t.append(((t-1)*y_t[t-1] + y)/t)
+
+    epsAPPROX, epsWSNE = computeApproximationGuarantees(m,n,R,C,x_t[T-1],y_t[T-1])
+
+    return(x_t[T-1],y_t[T-1],epsAPPROX,epsWSNE)
+
+def approxNEConstructionFPUNI(m,n,R,C):
+    T=1000
+
+    #Make sure everything iS an numpy array
+    R=np.array(R)
+    C=np.array(C)
+
+    x=np.array([])
+    y=np.array([])
+    x_t = []
+    y_t = []
+
+    #First Move
+    x=np.ones(m)/m
+    x_t.append(x)
+
+    y=np.ones(n)/n
+    y_t.append(y)
+
+    for t in range(1,T):
+        x=np.zeros(m)
+        Ry = np.matmul(R,y_t[t-1])
+
+        mx = max(Ry)
+        mx_counter = 0
+        for i, j in enumerate(Ry):
+            if j == mx:
+                x[i]=1
+                mx_counter += 1
+        x = x/mx_counter           
+
+        x_t.append(((t-1)*x_t[t-1] + x)/t)
+
+        y=np.zeros(n)
+        xC = np.matmul(x_t[t-1].T,C)
+        
+        mx = max(xC)
+        mx_counter = 0
+        for i, j in enumerate(xC):
+           if j == mx:
+              y[i]=1
+              mx_counter += 1
+        y = y/mx_counter
+
+        y_t.append(((t-1)*y_t[t-1] + y)/t)
+
+    epsAPPROX, epsWSNE = computeApproximationGuarantees(m,n,R,C,x_t[T-1],y_t[T-1])
+
+    return(x_t[T-1],y_t[T-1],epsAPPROX,epsWSNE)
 
 def approxNEConstructionDEL(m,n,R,C):
     print(bcolors.TODO + '''
@@ -753,16 +818,29 @@ print("\tDMPx =",DMPx,"\n\tDMPy =",DMPy)
 print("\tDMPepsAPPROX =",DMPepsAPPROX,".\tDMPepsWSNE =",DMPepsWSNE,"." + bcolors.ENDC)
 print( PLUSLINE + bcolors.ENDC )
 
-"""
-### EXECUTING FICTITIOUS PLAY ALGORITHM...
-x, y, FPepsAPPROX, FPepsWSNE = approxNEConstructionFP(reduced_m,reduced_n,reduced_R,reduced_C)
+
+### EXECUTING FICTITIOUS PLAY PBR ALGORITHM...
+x, y, FPPBRepsAPPROX, FPPBRepsWSNE = approxNEConstructionFPPBR(reduced_m,reduced_n,reduced_R,reduced_C)
 FPx, FPy = interpretReducedStrategiesForOriginalGame(x, y, R, C, reduced_R, reduced_C)
 print( bcolors.MSG + PLUSLINE )
-print("\tConstructed solution for FICTITIOUS PLAY:")
+print("\tConstructed solution for FICTITIOUS PLAY PBR:")
 print(MINUSLINE)
-print("\tFPx =",FPx,"\n\tFPy =",FPy)
-print("\tFPepsAPPROX =",FPepsAPPROX,".\tFPepsWSNE =",FPepsWSNE,".")
+print("\tFPPBRx =",FPx,"\n\tFPPBRy =",FPy)
+print("\tFPPBRepsAPPROX =",FPPBRepsAPPROX,".\tFPBRPepsWSNE =",FPPBRepsWSNE,".")
 print( PLUSLINE + bcolors.ENDC )
+
+### EXECUTING FICTITIOUS PLAY UNIFORM ALGORITHM...
+x, y,  FPUNIepsAPPROX,  FPUNIepsWSNE = approxNEConstructionFPUNI(reduced_m,reduced_n,reduced_R,reduced_C)
+FPx, FPy = interpretReducedStrategiesForOriginalGame(x, y, R, C, reduced_R, reduced_C)
+print( bcolors.MSG + PLUSLINE )
+print("\tConstructed solution for FICTITIOUS PLAY PBR:")
+print(MINUSLINE)
+print("\t FPUNIx =",FPx,"\n\t FPUNIy =",FPy)
+print("\t FPUNIepsAPPROX =", FPUNIepsAPPROX,".\tFPBRPepsWSNE =", FPUNIepsWSNE,".")
+print( PLUSLINE + bcolors.ENDC )
+
+
+"""
 ### EXECUTING DEL ALGORITHM...
 x, y, DELepsAPPROX, DELepsWSNE = approxNEConstructionDEL(reduced_m,reduced_n,reduced_R,reduced_C)
 DELx, DELy = interpretReducedStrategiesForOriginalGame(x, y, R, C, reduced_R, reduced_C)
