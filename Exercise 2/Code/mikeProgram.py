@@ -437,33 +437,41 @@ def solveZeroSumGame(m,n,A):
 def removeStrictlyDominatedStrategies(m,n,R,C):
     maxR=0
     maxC=0
-     #Make sure everything is a numpy array
-
+    #Make sure everything is a numpy array
     R=np.array(R)
     C=np.array(C)
-   
-   
-    for i in range(m):
-       for j in range(n): 
-           if maxR<R[i][j]:
-               maxR=R[i][j]
-
-       if maxR==0:
-         np.delete(R,i,0)
-         np.delete(C,i,0)    
-         n=n-1
-       maxR=0
-
-    for j in range(n):
+    test=True
+    while test:
+        test=False
         for i in range(m):
-            if maxC<C[i][j]:
-                maxC=C[i][j]
+            for j in range(n): 
+                if maxR<R[i][j]:
+                    maxR=R[i][j]
 
-        if maxC==0:
-            np.delete(C,j,1)
-            np.delete(R,j,1)
-          #  m=m-1
-        maxC=0    
+            if maxR==0:
+                R=np.delete(R,i,axis=0)
+                C=np.delete(C,i,axis=0)    
+                m=m-1
+                test=True
+                break
+                
+            maxR=0
+    test=True    
+    while test:
+        test=False
+        for j in range(n):
+            for i in range(m):
+                if maxC<C[i][j]:
+                    maxC=C[i][j]
+
+            if maxC==0:
+                C=np.delete(C,j,axis=1)
+                R=np.delete(R,j,axis=1)
+                n=n-1
+                test=True
+                break
+            maxC=0    
+       
     return m,n,R,C
 
 def interpretReducedStrategiesForOriginalGame(reduced_x,reduced_y,reduced_R,reduced_C,R,C):
