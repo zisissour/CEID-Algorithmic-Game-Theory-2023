@@ -532,7 +532,7 @@ def approxNEConstructionDMP(m,n,R,C):
 def approxNEConstructionFPPBR(m,n,R,C):
     T=1000
 
-    #Make sure everything iS an numpy array
+    #Make sure everything is an numpy array
     R=np.array(R)
     C=np.array(C)
 
@@ -549,23 +549,25 @@ def approxNEConstructionFPPBR(m,n,R,C):
     y[0]=1
     y_t.append(y)
 
+    #T itterations
     for t in range(1,T):
-        x=np.zeros(m)
-        x[np.argmax(np.matmul(R,y_t[t-1]))] = 1
-        x_t.append(((t-1)*x_t[t-1] + x)/t)
+        x=np.zeros(m) #Set new move to zeros 
+        x[np.argmax(np.matmul(R,y_t[t-1]))] = 1 #Set one for the first PBR you find
+        x_t.append(((t-1)*x_t[t-1] + x)/t) #Recalculate the strategy
 
         y=np.zeros(n)
         y[np.argmax(np.matmul(x_t[t-1].T,C))] = 1
         y_t.append(((t-1)*y_t[t-1] + y)/t)
 
-    epsAPPROX, epsWSNE = computeApproximationGuarantees(m,n,R,C,x_t[T-1],y_t[T-1])
+    epsAPPROX, epsWSNE = computeApproximationGuarantees(m,n,R,C,x_t[T-1],y_t[T-1]) #Calculate ε-approxes 
 
     return(x_t[T-1],y_t[T-1],epsAPPROX,epsWSNE)
 
 def approxNEConstructionFPUNI(m,n,R,C):
+
     T=1000
 
-    #Make sure everything iS an numpy array
+    #Make sure everything is a numpy array
     R=np.array(R)
     C=np.array(C)
 
@@ -582,9 +584,10 @@ def approxNEConstructionFPUNI(m,n,R,C):
     y_t.append(y)
 
     for t in range(1,T):
-        x=np.zeros(m)
-        Ry = np.matmul(R,y_t[t-1])
+        x=np.zeros(m) #Set new move to zeros
+        Ry = np.matmul(R,y_t[t-1]) #Calculate R after column's move
 
+        #Uniformly distribute possibility to every PBR
         mx = max(Ry)
         mx_counter = 0
         for i, j in enumerate(Ry):
@@ -593,7 +596,7 @@ def approxNEConstructionFPUNI(m,n,R,C):
                 mx_counter += 1
         x = x/mx_counter           
 
-        x_t.append(((t-1)*x_t[t-1] + x)/t)
+        x_t.append(((t-1)*x_t[t-1] + x)/t) #Recalculate the strategy
 
         y=np.zeros(n)
         xC = np.matmul(x_t[t-1].T,C)
@@ -749,6 +752,383 @@ def print_LAB2_preamble():
 
     input("Press ENTER to continue...")
 
+### E. EXPERIMENTS ###
+def defaultExperiments():
+
+    m,n = 10,10
+    numOfRandomGamesToSolve = 100
+    earliestColFor01 = 0
+    earliestRowFor10 = 0
+
+    G01=0
+    G10=0
+
+    num = int(input(bcolors.QUESTION+ 'Choose experiment: \n1)P1 \n2)P2 \n3)P3 \n4)P4\n' +bcolors.ENDC))
+
+    
+    if num == 1:
+        G10 =20
+        G01 =20
+    
+    elif num == 2:
+        G10 =20
+        G01 =50
+    
+    elif num == 3:
+        G10 =20
+        G01 =70
+
+    elif num == 4:
+        G10 =35
+        G01 =35
+    
+    else:
+        return
+
+    DMPepsAPPROX =np.zeros(numOfRandomGamesToSolve)
+    DMPepsWSNE =np.zeros(numOfRandomGamesToSolve)
+    DELepsAPPROX =np.zeros(numOfRandomGamesToSolve)
+    DELepsWSNE =np.zeros(numOfRandomGamesToSolve)
+    FPPBRepsAPPROX =np.zeros(numOfRandomGamesToSolve)
+    FPPBRepsWSNE =np.zeros(numOfRandomGamesToSolve)
+    FPUNIepsAPPROX =np.zeros(numOfRandomGamesToSolve)
+    FPUNIepsWSNE =np.zeros(numOfRandomGamesToSolve)
+    
+
+    minDMPepsAPPROX =0
+    minDMPepsWSNE =0
+    minDELepsAPPROX =0
+    minDELepsWSNE =0
+    minFPPBRepsAPPROX =0
+    minFPPBRepsWSNE =0
+    minFPUNIepsAPPROX =0
+    minFPUNIepsWSNE =0
+    
+    DMPApproxNEWorstGame1ROW = []
+    DMPApproxNEWorstGame1COL = []
+    DMPApproxNEWorstGame2ROW = []
+    DMPApproxNEWorstGame2COL = []
+    
+    DELApproxNEWorstGame1ROW = []
+    DELApproxNEWorstGame1COL = []
+    DELApproxNEWorstGame2ROW = []
+    DELApproxNEWorstGame2COL = []
+    
+    FPPBRApproxNEWorstGame1ROW = []
+    FPPBRApproxNEWorstGame1COL = []
+    FPPBRApproxNEWorstGame2ROW = []
+    FPPBRApproxNEWorstGame2COL = []
+
+    FPUNIApproxNEWorstGame1ROW = []
+    FPUNIApproxNEWorstGame1COL = []
+    FPUNIApproxNEWorstGame2ROW = []
+    FPUNIApproxNEWorstGame2COL = []
+
+    DMPApproxNEHistogram = np.zeros(10)
+    DMPWSNEHistogram = np.zeros(10)
+    DELApproxNEHistogram = np.zeros(10)
+    DELWSNEHistogram = np.zeros(10)
+    FPPBRApproxNEHistogram = np.zeros(10)
+    FPPBRWSNEHistogram = np.zeros(10)
+    FPUNIApproxNEHistogram = np.zeros(10)
+    FPUNIWSNEHistogram = np.zeros(10)
+
+    for i in range(0,numOfRandomGamesToSolve):
+        EXITCODE = -5
+        numOfAttempts = 0
+
+        # TRY GETTING A NEW RANDOM GAME
+        # REPEAT UNTIL EXITCODE = 0, ie, a valid game was constructed.
+        # NOTE: EXITCODE in {-1,-2,-3} indicates invalid parameters and exits the program)
+        while EXITCODE < 0: 
+            # EXIT CODE = -4 ==> No problem with parameters, only BAD LUCK, TOO MANY 01-elements within 10-eligible area
+            # EXIT CODE = -5 ==> No problem with parameters, only BAD LUCK, ALL-01 column exists within 10-eligible area
+            numOfAttempts += 1
+            print("Attempt #" + str(numOfAttempts) + " to construct a random game...")
+            EXITCODE,R,C = generate_winlose_game_without_pne(m,n,G01,G10,earliestColFor01,earliestRowFor10)
+
+            if EXITCODE in [-1,-2,-3]:
+                print(bcolors.ERROR + "ERROR MESSAGE MAIN 1: Invalid parameters were provided for the construction of the random game." + bcolors.ENDC)
+                exit()
+
+        reduced_m,reduced_n, reduced_R,reduced_C = removeStrictlyDominatedStrategies(m,n,R,C)
+
+        ### EXECUTING DMP ALGORITHM...  
+        x, y, DMPepsAPPROX[i], DMPepsWSNE[i] = approxNEConstructionDMP(reduced_m,reduced_n,reduced_R,reduced_C)
+        ### EXECUTING DEL ALGORITHM...
+        x, y, DELepsAPPROX[i], DELepsWSNE[i]= approxNEConstructionDEL(reduced_m,reduced_n,reduced_R,reduced_C)
+        ### EXECUTING FICTITIOUS PLAY PBR ALGORITHM...
+        x, y, FPPBRepsAPPROX[i], FPPBRepsWSNE[i] = approxNEConstructionFPPBR(reduced_m,reduced_n,reduced_R,reduced_C)
+        ### EXECUTING FICTITIOUS PLAY UNIFORM ALGORITHM...
+        x, y,  FPUNIepsAPPROX[i],  FPUNIepsWSNE[i] = approxNEConstructionFPUNI(reduced_m,reduced_n,reduced_R,reduced_C)
+
+        
+        if DMPepsAPPROX[i] > minDMPepsAPPROX:
+            minDMPepsAPPROX = DMPepsAPPROX[i]
+            DMPApproxNEWorstGame1ROW = R
+            DMPApproxNEWorstGame1COL = C
+        if DMPepsWSNE[i] > minDMPepsWSNE:
+            minDMPepsWSNE = DMPepsWSNE[i]
+            DMPApproxNEWorstGame2ROW = R
+            DMPApproxNEWorstGame2COL = C
+        if DELepsAPPROX[i] > minDELepsAPPROX:
+            minDELepsAPPROX = DELepsAPPROX[i]
+            DELApproxNEWorstGame1ROW = R
+            DELApproxNEWorstGame1COL = C
+        if DELepsWSNE[i] > minDELepsWSNE:
+            minDELepsWSNE = DELepsWSNE[i]
+            DELApproxNEWorstGame2ROW = R
+            DELApproxNEWorstGame2COL = C
+        if FPPBRepsAPPROX[i] > minFPPBRepsAPPROX:
+            minFPPBRepsAPPROX = FPPBRepsAPPROX[i]
+            FPPBRApproxNEWorstGame1ROW = R
+            FPPBRApproxNEWorstGame1COL = C
+        if FPPBRepsWSNE[i] > minFPPBRepsWSNE:
+            minFPPBRepsWSNE = FPPBRepsWSNE[i]
+            FPPBRApproxNEWorstGame2ROW = R
+            FPPBRApproxNEWorstGame2COL = C
+        if FPUNIepsAPPROX[i] > minFPUNIepsAPPROX:
+            minFPUNIepsAPPROX = FPUNIepsAPPROX[i]
+            FPUNIApproxNEWorstGame1ROW = R
+            FPUNIApproxNEWorstGame1COL = C
+        if FPUNIepsWSNE[i] > minFPUNIepsWSNE:
+            minFPUNIepsWSNE = FPUNIepsWSNE[i]
+            FPUNIApproxNEWorstGame2ROW = R
+            FPPBRApproxNEWorstGame2COL = C
+
+    
+  
+    counts, bins = np.histogram(DMPepsAPPROX, range=(0,1))
+    DMPApproxNEHistogram = counts
+    plt.title('DMPepsApproxNE')
+    plt.xlabel('ε')
+    plt.ylabel('Counts')
+    plt.stairs(counts,bins)
+    plt.savefig('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'DMPApproxNEHistogram.jpg')
+    plt.close()
+
+    counts, bins = np.histogram(DELepsAPPROX, range=(0,1))
+    DELApproxNEHistogram = counts
+    plt.title('DELepsApproxNE')
+    plt.xlabel('ε')
+    plt.ylabel('Counts')
+    plt.stairs(counts,bins)
+    plt.savefig('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'DELApproxNEHistogram.jpg')
+    plt.close()
+
+    counts, bins = np.histogram(FPPBRepsAPPROX, range=(0,1))
+    FPPBRApproxNEHistogram = counts
+    plt.title('FPPBRepsAPPROX')
+    plt.xlabel('ε')
+    plt.ylabel('Counts')
+    plt.stairs(counts,bins)
+    plt.savefig('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'FPPBRApproxNEHistogram.jpg')
+    plt.close()
+
+    counts, bins = np.histogram(FPUNIepsAPPROX, range=(0,1))
+    FPUNIApproxNEHistogram = counts
+    plt.title('FPUNIepsApproxNE')
+    plt.xlabel('ε')
+    plt.ylabel('Counts')
+    plt.stairs(counts,bins)
+    plt.savefig('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'FPUNIApproxNEHistogram.jpg')
+    plt.close()
+
+    counts, bins = np.histogram(DMPepsWSNE, range=(0,1))
+    DMPWSDMPepsWSNEHistogram = counts
+    plt.title('DMPepsWSNE')
+    plt.xlabel('ε')
+    plt.ylabel('Counts')
+    plt.stairs(counts,bins)
+    plt.savefig('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'DMPepsWSNEHistogram.jpg')
+    plt.close()
+
+    counts, bins = np.histogram(DELepsWSNE, range=(0,1))
+    DELWSDMPepsWSNEHistogram = counts
+    plt.title('DELepsWSNE')
+    plt.xlabel('ε')
+    plt.ylabel('Counts')
+    plt.stairs(counts,bins)
+    plt.savefig('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'DELepsWSNEHistogram.jpg')
+    plt.close()
+
+    counts, bins = np.histogram(FPPBRepsWSNE, range=(0,1))
+    FPPBRWSDMPepsWSNEHistogram = counts
+    plt.title('FPPBRepsWSNE')
+    plt.xlabel('ε')
+    plt.ylabel('Counts')
+    plt.stairs(counts,bins)
+    plt.savefig('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'FPPBRepsWSNEHistogram.jpg')
+    plt.close()
+
+    counts, bins = np.histogram(FPUNIepsWSNE, range=(0,1))
+    FPUNIWSDMPepsWSNEHistogram = counts
+    plt.title('FPUNIepsWSNE')
+    plt.xlabel('ε')
+    plt.ylabel('Counts')
+    plt.stairs(counts,bins)
+    plt.savefig('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'FPUNIepsWSNEHistogram.jpg')
+    plt.close()
+
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'DMPApproxNEHistogram', DMPApproxNEHistogram, delimiter=',', fmt='%4d')
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'DMPWSNEHistogram', DMPWSNEHistogram, delimiter=',', fmt='%4d')
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'DMPApproxNEWorstGame1ROW', DMPApproxNEWorstGame1ROW, delimiter=',', fmt='%1d')
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'DMPApproxNEWorstGame1COL', DMPApproxNEWorstGame1COL, delimiter=',', fmt='%1d')
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'DMPApproxNEWorstGame2ROW', DMPApproxNEWorstGame2ROW, delimiter=',', fmt='%1d')
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'DMPApproxNEWorstGame2COL', DMPApproxNEWorstGame2COL, delimiter=',', fmt='%1d')
+
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'DELApproxNEHistogram', DELApproxNEHistogram, delimiter=',', fmt='%4d')
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'DELWSNEHistogram', DELWSNEHistogram, delimiter=',', fmt='%4d')
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'DELApproxNEWorstGame1ROW', DELApproxNEWorstGame1ROW, delimiter=',', fmt='%1d')
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'DELApproxNEWorstGame1COL', DELApproxNEWorstGame1COL, delimiter=',', fmt='%1d')
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'DELApproxNEWorstGame2ROW', DELApproxNEWorstGame2ROW, delimiter=',', fmt='%1d')
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'DELApproxNEWorstGame2COL', DELApproxNEWorstGame2COL, delimiter=',', fmt='%1d')
+
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'FPPBRApproxNEHistogram', FPPBRApproxNEHistogram, delimiter=',', fmt='%4d')
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'FPPBRWSNEHistogram', FPPBRWSNEHistogram, delimiter=',', fmt='%4d')
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'FPPBRApproxNEWorstGame1ROW', FPPBRApproxNEWorstGame1ROW, delimiter=',', fmt='%1d')
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'FPPBRApproxNEWorstGame1COL', FPPBRApproxNEWorstGame1COL, delimiter=',', fmt='%1d')
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'FPPBRApproxNEWorstGame2ROW', FPPBRApproxNEWorstGame2ROW, delimiter=',', fmt='%1d')
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'FPPBRApproxNEWorstGame2COL', FPPBRApproxNEWorstGame2COL, delimiter=',', fmt='%1d')
+
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'FPUNIApproxNEHistogram', FPUNIApproxNEHistogram, delimiter=',', fmt='%4d')
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'FPUNIWSNEHistogram', FPUNIWSNEHistogram, delimiter=',', fmt='%4d')
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'FPUNIApproxNEWorstGame1ROW', FPUNIApproxNEWorstGame1ROW, delimiter=',', fmt='%1d')
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'FPUNIApproxNEWorstGame1COL', FPUNIApproxNEWorstGame1COL, delimiter=',', fmt='%1d')
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'FPUNIApproxNEWorstGame2ROW', FPUNIApproxNEWorstGame2ROW, delimiter=',', fmt='%1d')
+    np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'FPUNIApproxNEWorstGame2COL', FPUNIApproxNEWorstGame2COL, delimiter=',', fmt='%1d')
+
+### F. MENU ###
+def menu():
+    
+    m=[]
+    n=[]
+    R=[]
+    C=[]
+    
+    while True:
+
+        num = input(bcolors.QUESTION+ 'What would you like to do? \n1)Load Bimatrix game \n2)Save new Bimatrix game \n3)Run experiments\n' + bcolors.ENDC)
+        if int(num) == 1:
+            try:
+                filename = input(bcolors.QUESTION+ 'Type file name containing the R matrix: ' + bcolors.ENDC)
+                R = np.genfromtxt(filename, delimiter=',', skip_header=0)
+                filename = input(bcolors.QUESTION+ 'Type file name containing the C matrix: ' + bcolors.ENDC)
+                C = np.genfromtxt(filename, delimiter=',', skip_header=0)
+                m=len(R)
+                n=len(R[0])
+
+                break
+
+            except:
+                print(bcolors.ERROR+ 'File not found!' + bcolors.ENDC)
+
+        elif int(num) == 2:
+            try:
+                m = int(input(bcolors.QUESTION+ 'Enter number of rows: ' + bcolors.ENDC))
+                n = int(input(bcolors.QUESTION+ 'Enter number of columns: ' + bcolors.ENDC))
+                R = np.zeros((m,n))
+                C = R
+
+                print(bcolors.GREEN + 'Creating R matrix: \n' + bcolors.ENDC)
+                for i in range(m):
+                    for j in range(n):
+                        R[i][j] = input(bcolors.QUESTION+ '\nEnter value for row ' + str(i+1) + ', column '+ str(j+1) +': ' + bcolors.ENDC)
+                
+                filename = input(bcolors.QUESTION+ 'Enter file name: '+ bcolors.ENDC)
+                np.savetxt(filename,R,delimiter=',', fmt='%1.4e')
+
+                print(bcolors.GREEN + 'Creating C matrix: \n' + bcolors.ENDC)
+                for i in range(m):
+                    for j in range(n):
+                        C[i][j] = input(bcolors.QUESTION+ '\nEnter value for row ' + str(i+1) + ', column '+ str(j+1) +': ' + bcolors.ENDC)
+
+                filename = input(bcolors.QUESTION+ 'Enter file name: '+ bcolors.ENDC)
+                np.savetxt(filename,C,delimiter=',', fmt='%1.4e')
+
+            except:
+                print(bcolors.ERROR + 'Wrong input' + bcolors.ENDC)
+        
+        elif int(num) == 3:
+            num = int(input(bcolors.QUESTION+ 'What would you like to do? \n1)Run premade experiments \n2)Run custom experiment\n'+ bcolors.ENDC))
+            if num == 1:
+                defaultExperiments()
+            elif num == 2:
+                print('custom')
+                #TODO
+            else:
+                return
+
+        else:
+            return
+
+    num = int(input(bcolors.QUESTION+ 'What would you like to do? \n1)Calculate pure NE \n2)Calculate approximate NE\n' +bcolors.ENDC))
+    
+    if num == 1:
+        drawBimatrix(m,n,R,C)
+        ### SEEKING FOR PNE IN THE GAME (R,C)...
+
+        (i,j)= checkForPNE(m,n,R,C)
+        if (i,j) != (0,0):
+            print( bcolors.MSG + "A pure NE (",i,",",j,") was discovered for (R,C)." + bcolors.ENDC )
+            #exit()
+        else:
+            print( bcolors.MSG + "No pure NE exists for (R,C)." + bcolors.ENDC )
+    
+    elif num == 2:
+        num = int(input(bcolors.QUESTION+ 'Select algorithm:\n 1)DMP \n2)DEL \n3)FP PBR \n4)FP UNIFORM\n' + bcolors.ENDC))
+        
+        drawBimatrix(m,n,R,C)
+
+        if num == 1:
+            ### EXECUTING DMP ALGORITHM...
+            x, y, DMPepsAPPROX, DMPepsWSNE = approxNEConstructionDMP(m,n,R,C)
+            #DMPx, DMPy = interpretReducedStrategiesForOriginalGame(x, y, R, C, reduced_R, reduced_C)
+            print( bcolors.MSG + PLUSLINE) 
+            print("\tConstructed solution for DMP:")
+            print(MINUSLINE)
+            print("\tDMPx =",x,"\n\tDMPy =",y)
+            print("\tDMPepsAPPROX =",DMPepsAPPROX,".\tDMPepsWSNE =",DMPepsWSNE,"." + bcolors.ENDC)
+            print( PLUSLINE + bcolors.ENDC )
+
+        elif num == 2:
+            ### EXECUTING DEL ALGORITHM...
+            x, y, DELepsAPPROX, DELepsWSNE = approxNEConstructionDEL(m,m,R,C)
+            #DELx, DELy = interpretReducedStrategiesForOriginalGame(x, y, R, C, reduced_R, reduced_C)
+            print( bcolors.MSG + PLUSLINE )
+            print("\tConstructed solution for DEL:")
+            print(MINUSLINE)
+            print("\tDELx =",x,"\n\tDELy =",y)
+            print("\tDELepsAPPROX =",DELepsAPPROX,".\tDELepsWSNE =",DELepsWSNE,".")
+            print( PLUSLINE + bcolors.ENDC )
+        
+        elif num == 3:
+            ### EXECUTING FICTITIOUS PLAY PBR ALGORITHM...
+            x, y, FPPBRepsAPPROX, FPPBRepsWSNE = approxNEConstructionFPPBR(m,n,R,C)
+            #FPx, FPy = interpretReducedStrategiesForOriginalGame(x, y, R, C, reduced_R, reduced_C)
+            print( bcolors.MSG + PLUSLINE )
+            print("\tConstructed solution for FICTITIOUS PLAY PBR:")
+            print(MINUSLINE)
+            print("\tFPPBRx =",x,"\n\tFPPBRy =",y)
+            print("\tFPPBRepsAPPROX =",FPPBRepsAPPROX,".\tFPBRPepsWSNE =",FPPBRepsWSNE,".")
+            print( PLUSLINE + bcolors.ENDC )
+
+        elif num == 4:
+            ### EXECUTING FICTITIOUS PLAY UNIFORM ALGORITHM...
+            x, y,  FPUNIepsAPPROX,  FPUNIepsWSNE = approxNEConstructionFPUNI(m,n,R,C)
+            #FPx, FPy = interpretReducedStrategiesForOriginalGame(x, y, R, C, reduced_R, reduced_C)
+            print( bcolors.MSG + PLUSLINE )
+            print("\tConstructed solution for FICTITIOUS PLAY PBR:")
+            print(MINUSLINE)
+            print("\t FPUNIx =",x,"\n\t FPUNIy =",y)
+            print("\t FPUNIepsAPPROX =", FPUNIepsAPPROX,".\tFPBRPepsWSNE =", FPUNIepsWSNE,".")
+            print( PLUSLINE + bcolors.ENDC )
+        
+        else:
+            return
+
+    else:
+        return
 ### MAIN PROGRAM FOR LAB-2 ###
 
 LINELENGTH  = 80
@@ -761,92 +1141,26 @@ print_LAB2_preamble()
 screen_clear()
 
 maxNumOfRandomGamesToSolve = 10000
-
 maxNumberOfActions = 20
 
-m,n = determineGameDimensions()
+menu()
 
-G10,G01 = determineNumGoodCellsForPlayers(m,n)
 
-numOfRandomGamesToSolve = determineNumRandomGamesToSolve()
 
-earliestColFor01 = 0
-earliestRowFor10 = 0
-
-EXITCODE = -5
-numOfAttempts = 0
-
-# TRY GETTING A NEW RANDOM GAME
-# REPEAT UNTIL EXITCODE = 0, ie, a valid game was constructed.
-# NOTE: EXITCODE in {-1,-2,-3} indicates invalid parameters and exits the program)
-while EXITCODE < 0: 
-    # EXIT CODE = -4 ==> No problem with parameters, only BAD LUCK, TOO MANY 01-elements within 10-eligible area
-    # EXIT CODE = -5 ==> No problem with parameters, only BAD LUCK, ALL-01 column exists within 10-eligible area
-    numOfAttempts += 1
-    print("Attempt #" + str(numOfAttempts) + " to construct a random game...")
-    EXITCODE,R,C = generate_winlose_game_without_pne(m,n,G01,G10,earliestColFor01,earliestRowFor10)
-
-    if EXITCODE in [-1,-2,-3]:
-        print(bcolors.ERROR + "ERROR MESSAGE MAIN 1: Invalid parameters were provided for the construction of the random game." + bcolors.ENDC)
-        exit()
 
 drawBimatrix(m,n,R,C)
 
-### SEEKING FOR PNE IN THE GAME (R,C)...
-
-(i,j)= checkForPNE(m,n,R,C)
-if (i,j) != (0,0):
-    print( bcolors.MSG + "A pure NE (",i,",",j,") was discovered for (R,C)." + bcolors.ENDC )
-    exit()
-else:
-    print( bcolors.MSG + "No pure NE exists for (R,C). Looking for an approximate NE point..." + bcolors.ENDC )
 
 
-reduced_m,reduced_n, reduced_R,reduced_C = removeStrictlyDominatedStrategies(m,n,R,C)
+
+
 
 print(bcolors.MSG + "Reduced bimatrix, after removal of strictly dominated actions:")
 drawBimatrix(reduced_m,reduced_n,reduced_R,reduced_C)
 
 
-### EXECUTING DMP ALGORITHM...
-x, y, DMPepsAPPROX, DMPepsWSNE = approxNEConstructionDMP(reduced_m,reduced_n,reduced_R,reduced_C)
-DMPx, DMPy = interpretReducedStrategiesForOriginalGame(x, y, R, C, reduced_R, reduced_C)
-print( bcolors.MSG + PLUSLINE) 
-print("\tConstructed solution for DMP:")
-print(MINUSLINE)
-print("\tDMPx =",DMPx,"\n\tDMPy =",DMPy)
-print("\tDMPepsAPPROX =",DMPepsAPPROX,".\tDMPepsWSNE =",DMPepsWSNE,"." + bcolors.ENDC)
-print( PLUSLINE + bcolors.ENDC )
 
 
-### EXECUTING FICTITIOUS PLAY PBR ALGORITHM...
-x, y, FPPBRepsAPPROX, FPPBRepsWSNE = approxNEConstructionFPPBR(reduced_m,reduced_n,reduced_R,reduced_C)
-FPx, FPy = interpretReducedStrategiesForOriginalGame(x, y, R, C, reduced_R, reduced_C)
-print( bcolors.MSG + PLUSLINE )
-print("\tConstructed solution for FICTITIOUS PLAY PBR:")
-print(MINUSLINE)
-print("\tFPPBRx =",FPx,"\n\tFPPBRy =",FPy)
-print("\tFPPBRepsAPPROX =",FPPBRepsAPPROX,".\tFPBRPepsWSNE =",FPPBRepsWSNE,".")
-print( PLUSLINE + bcolors.ENDC )
-
-### EXECUTING FICTITIOUS PLAY UNIFORM ALGORITHM...
-x, y,  FPUNIepsAPPROX,  FPUNIepsWSNE = approxNEConstructionFPUNI(reduced_m,reduced_n,reduced_R,reduced_C)
-FPx, FPy = interpretReducedStrategiesForOriginalGame(x, y, R, C, reduced_R, reduced_C)
-print( bcolors.MSG + PLUSLINE )
-print("\tConstructed solution for FICTITIOUS PLAY PBR:")
-print(MINUSLINE)
-print("\t FPUNIx =",FPx,"\n\t FPUNIy =",FPy)
-print("\t FPUNIepsAPPROX =", FPUNIepsAPPROX,".\tFPBRPepsWSNE =", FPUNIepsWSNE,".")
-print( PLUSLINE + bcolors.ENDC )
 
 
-"""
-### EXECUTING DEL ALGORITHM...
-x, y, DELepsAPPROX, DELepsWSNE = approxNEConstructionDEL(reduced_m,reduced_n,reduced_R,reduced_C)
-DELx, DELy = interpretReducedStrategiesForOriginalGame(x, y, R, C, reduced_R, reduced_C)
-print( bcolors.MSG + PLUSLINE )
-print("\tConstructed solution for DEL:")
-print(MINUSLINE)
-print("\tDELx =",DELx,"\n\tDELy =",DELy)
-print("\tDELepsAPPROX =",DELepsAPPROX,".\tDELepsWSNE =",DELepsWSNE,".")
-print( PLUSLINE + bcolors.ENDC )"""
+
