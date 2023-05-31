@@ -435,16 +435,40 @@ def solveZeroSumGame(m,n,A):
     return(x,y)
  
 def removeStrictlyDominatedStrategies(m,n,R,C):
+    #Make sure everything is a numpy array
+    R=np.array(R)
+    C=np.array(C)
 
-    print(bcolors.TODO + '''
-    ROUTINE: removeStrictlyDominatedStrategies
-    PRE:    A win-lose bimatrix game, described by the two payoff matrices, with payoff values in {0,1}.
-    POST:   The subgame constructed by having all strictly dominated actions removed.
-             * Each (0,*)-ROW in the bimatrix must be removed.
-             * Each (*,0)-COLUMN in the bimatrix must be removed.
-             ''' + bcolors.ENDC)
+    maxR=0
+    maxC=0
+
+    for i in range(m):
+        for j in range(n): 
+            if maxR<R[i][j]:
+                maxR=R[i][j]
+
+        if maxR==0:
+            R=np.delete(R,i,axis=0)
+            C=np.delete(C,i,axis=0)    
+            m=m-1
+            m,n,R,C = removeStrictlyDominatedStrategies(m,n,R,C)
+            break
+        maxR=0
+
+    for j in range(n):
+        for i in range(m):
+            if maxC<C[i][j]:
+                maxC=C[i][j]
+
+        if maxC==0:
+            C=np.delete(C,j,axis=1)
+            R=np.delete(R,j,axis=1)
+            n=n-1
+            m,n,R,C = removeStrictlyDominatedStrategies(m,n,R,C)
+            break
+        maxC=0
     
-    return(m,n,R,C)
+    return m,n,R,C
 
 def interpretReducedStrategiesForOriginalGame(reduced_x,reduced_y,reduced_R,reduced_C,R,C):
 

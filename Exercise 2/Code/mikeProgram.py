@@ -1,7 +1,6 @@
 import numpy as np
 from numpy import genfromtxt
 from numpy.linalg import matrix_rank
-
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from scipy.optimize import linprog
@@ -436,45 +435,44 @@ def solveZeroSumGame(m,n,A):
 
     return(x,y)
  
+
+
 def removeStrictlyDominatedStrategies(m,n,R,C):
-    maxR=0
-    maxC=0
     #Make sure everything is a numpy array
     R=np.array(R)
     C=np.array(C)
-    test=True
-    while test:
-        test=False
+
+    maxR=0
+    maxC=0
+
+    for i in range(m):
+        for j in range(n): 
+            if maxR<R[i][j]:
+                maxR=R[i][j]
+
+        if maxR==0:
+            R=np.delete(R,i,axis=0)
+            C=np.delete(C,i,axis=0)    
+            m=m-1
+            m,n,R,C = removeStrictlyDominatedStrategies(m,n,R,C)
+            break
+        maxR=0
+
+    for j in range(n):
         for i in range(m):
-            for j in range(n): 
-                if maxR<R[i][j]:
-                    maxR=R[i][j]
+            if maxC<C[i][j]:
+                maxC=C[i][j]
 
-            if maxR==0:
-                R=np.delete(R,i,axis=0)
-                C=np.delete(C,i,axis=0)    
-                m=m-1
-                test=True
-                break
-                
-            maxR=0
-    test=True    
-    while test:
-        test=False
-        for j in range(n):
-            for i in range(m):
-                if maxC<C[i][j]:
-                    maxC=C[i][j]
-
-            if maxC==0:
-                C=np.delete(C,j,axis=1)
-                R=np.delete(R,j,axis=1)
-                n=n-1
-                test=True
-                break
-            maxC=0    
-       
+        if maxC==0:
+            C=np.delete(C,j,axis=1)
+            R=np.delete(R,j,axis=1)
+            n=n-1
+            m,n,R,C = removeStrictlyDominatedStrategies(m,n,R,C)
+            break
+        maxC=0
+    
     return m,n,R,C
+
 
 def interpretReducedStrategiesForOriginalGame(reduced_x,reduced_y,reduced_R,reduced_C,R,C):
 
