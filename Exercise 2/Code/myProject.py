@@ -5,9 +5,7 @@ from numpy.linalg import matrix_rank
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from scipy.optimize import linprog
-
 import random
-
 import os
 
 ############################### FG COLOR DEFINITIONS ###############################
@@ -437,6 +435,7 @@ def solveZeroSumGame(m,n,A):
     return(x,y)
  
 def removeStrictlyDominatedStrategies(m,n,R,C):
+
     maxR=0
     maxC=0
     #Make sure everything is a numpy array
@@ -475,6 +474,20 @@ def removeStrictlyDominatedStrategies(m,n,R,C):
             maxC=0    
        
     return m,n,R,C
+
+def interpretReducedStrategiesForOriginalGame(reduced_x,reduced_y,reduced_R,reduced_C,R,C):
+
+    print(bcolors.TODO + '''
+    ROUTINE:    interpretReducedStrategiesForOriginalGame
+    PRE:        A profile of strategies (reduced_x,reduced_y) for the reduced 
+                game (reduced_R,reduced_C), without (0,*)-rows or (*,0)-columns.
+    POST:       The corresponding profile for the original game (R,C).
+    ''' + bcolors.ENDC)
+
+    x = reduced_x
+    y = reduced_y
+
+    return(x,y)
 
 def interpretReducedStrategiesForOriginalGame(reduced_x,reduced_y,reduced_R,reduced_C,R,C):
 
@@ -539,21 +552,80 @@ def approxNEConstructionFP(m,n,R,C):
     return(x,y,epsAPPROX,epsWSNE)
 
 def approxNEConstructionDEL(m,n,R,C):
-    print(bcolors.TODO + '''
-    ROUTINE: approxNEConstructionDEL
-    PRE:    A bimatrix game, described by the two payoff matrices, with payoff values in [0,1].
-    POST:   A profile of strategies (x,y) produced by the DEL algorithm.''' + bcolors.ENDC)
+     
+     #Make sure everything is an numpy array
+    R=np.array(R)
+    C=np.array(C)
+
+   
+   
+
+
+    x_row,y_row = solveZeroSumGame(m,n,R) # this example solves (R,-R)
+    V_row = np.matmul(x_row.T,np.matmul(R,y_row))
+   
+
+
+    x_col,y_col = solveZeroSumGame(m,n,C) # this example solves (C,-C)
+    V_col=np.matmul(x_col.T,np.matmul(C,y_col))
+
+
+
+    if V_row < V_col :
+        #αντάλλαξε ρόλους των δύο παικτών δηλαδή R-> C.T και C-> R.T
+        temp= R
+        R=C.T
+        C=temp.T
+
+        #Eπανεύρεση των x_row,y_row,x_col,y_col,V_row,V_col,epsAPPROX,epsWSNE
+
+        x_row,y_row = solveZeroSumGame(m,n,R) # this example solves (R,-R) 
+        
+        
+       # epsAPPROX,epsWSNE = computeApproximationGuarantees(m,n,R,C,x_row,y_row)
+        #Υπολογισμός V_row που είναι η εγγυημένη ωφέλια της παίκτριας γραμμής
+
+        V_row = np.matmul(x_row.T,np.matmul(R,y_row))
+
+
+        #y_col είναι η MAXMIN στρατιγική του παίκτη στήλης 
+        y_col,x_col = solveZeroSumGame(m,n,C) # this example solves (C,-C)
+       
+
+        #Υπολογισμός V_col που είναι η εγγυημένη ωφέλια του παίκτη στήλης
+        
+        V_col=np.matmul(x_col.T,np.matmul(C,y_col))
+
+        #Αναμενόμενη ωφέλια του παίκτη στήλης ενάντια στο x_row
+       # x_rowC=np.matmul(x_row.T,C) 
+
+
+
+        
+    if V_row<= 2/3:
+        epsAPPROX,epsWSNE = computeApproximationGuarantees(m,n,R,C,x_col,y_row)
+        return x_col,y_row,epsAPPROX,epsWSNE
+    else:
     
-    #... provide your code here, commenting all previous (unnecessary) prints ...
+        if max(np.matmul(x_row.T,C))<= 2/3:
+            epsAPPROX,epsWSNE = computeApproximationGuarantees(m,n,R,C,x_row,y_row)
+            return x_row,y_row,epsAPPROX,epsWSNE
+        else:
+            x_rowC=np.matmul(x_row.T,C)
+            pbr=max(x_rowC)
+            j_star = random.choice([i for i, j in enumerate(x_rowC) if j == pbr]) 
 
-    # these steps are just to do something 
+            for i in range(m):
+               if R[i][j_star]>1/3 and C[i][j_star]>1/3:
+                   i_star=i
+                   break
 
-    x,y = solveZeroSumGame(m,n,R) # this example solves (R,-R)
-    x = x.transpose()
-    y = y.transpose()
-    epsAPPROX,epsWSNE = computeApproximationGuarantees(m,n,R,C,x,y)
+            x=np.zeros(m)
+            y=np.zeros(n)
 
-    # these steps are just to do something 
+            x[i_star]=1           
+            y[j_star]=1
+            epsAPPROX,epsWSNE = computeApproximationGuarantees(m,n,R,C,x,y)
 
     return(x,y,epsAPPROX,epsWSNE)
 
@@ -728,9 +800,19 @@ else:
     print( bcolors.MSG + "No pure NE exists for (R,C). Looking for an approximate NE point..." + bcolors.ENDC )
 
 
-reduced_m,reduced_n, reduced_R,reduced_C = removeStrictlyDominatedStrategies(m,n,R,C)
+#reduced_m,reduced_n, reduced_R,reduced_C = removeStrictlyDominatedStrategies(m,n,R,C)
 
 print(bcolors.MSG + "Reduced bimatrix, after removal of strictly dominated actions:")
-drawBimatrix(reduced_m,reduced_n,reduced_R,reduced_C)
+
+#drawBimatrix(reduced_m,reduced_n,reduced_R,reduced_C)
 
 
+### EXECUTING DEL ALGORITHM...
+
+x, y, DELepsAPPROX, DELepsWSNE = approxNEConstructionDEL(m,n,R,C)
+# DELx, DELy = interpretReducedStrategiesForOriginalGame(x, y, R, C, reduced_R, reduced_C)
+
+print("\tConstructed solution for DEL:")
+print(MINUSLINE)
+#print("\tDELx =",DELx,"\n\tDELy =",DELy)
+print("\tDELepsAPPROX =",DELepsAPPROX,".\tDELepsWSNE =",DELepsWSNE,".")
