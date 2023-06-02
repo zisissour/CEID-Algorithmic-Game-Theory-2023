@@ -5,6 +5,8 @@ from numpy.linalg import matrix_rank
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from scipy.optimize import linprog
+
+import time
 import random
 import os
 
@@ -554,7 +556,7 @@ def approxNEConstructionDMP(m,n,R,C):
     return(x,y,epsAPPROX,epsWSNE)
 
 def approxNEConstructionFPPBR(m,n,R,C):
-    T=1000
+    T=100
 
     #Make sure everything is an numpy array
     R=np.array(R)
@@ -589,7 +591,7 @@ def approxNEConstructionFPPBR(m,n,R,C):
 
 def approxNEConstructionFPUNI(m,n,R,C):
 
-    T=1000
+    T=100
 
     #Make sure everything is a numpy array
     R=np.array(R)
@@ -639,24 +641,56 @@ def approxNEConstructionFPUNI(m,n,R,C):
 
     return(x_t[T-1],y_t[T-1],epsAPPROX,epsWSNE)
 
-def approxNEConstructionDEL(m,n,R,C):
-    print(bcolors.TODO + '''
-    ROUTINE: approxNEConstructionDEL
-    PRE:    A bimatrix game, described by the two payoff matrices, with payoff values in [0,1].
-    POST:   A profile of strategies (x,y) produced by the DEL algorithm.''' + bcolors.ENDC)
-    
-    #... provide your code here, commenting all previous (unnecessary) prints ...
+def approxNEConstructionDEL(m,n,R,C,):
+    #Make sure everything is a numpy array
+    R = np.array(R)
+    C = np.array(C)
 
-    # these steps are just to do something 
+    x_row, y_row = solveZeroSumGame(m,n,R)
+    x_rowR = np.matmul(x_row.T,R)
+    V_row = np.matmul(x_rowR,y_row)
 
-    x,y = solveZeroSumGame(m,n,R) # this example solves (R,-R)
-    x = x.transpose()
-    y = y.transpose()
-    epsAPPROX,epsWSNE = computeApproximationGuarantees(m,n,R,C,x,y)
+    x_col, y_col = solveZeroSumGame(m,n,C)
+    x_colC = np.matmul(x_col,C)
+    V_col = np.matmul(x_colC,y_col)
 
-    # these steps are just to do something 
+    if V_row < V_col:
+        R=R.T
+        C=C.T
+        tmp=m
+        m=n
+        n=tmp
+        x_row, y_row = solveZeroSumGame(m,n,R)
+        x_col, y_col = solveZeroSumGame(m,n,C)
+        x_rowR = np.matmul(x_row.T,R)
+        V_row = np.matmul(x_rowR,y_row)
 
-    return(x,y,epsAPPROX,epsWSNE)
+    if V_row <= float(2/3):
+        epsApproxNE, epsWSNE = computeApproximationGuarantees(m,n,R,C,x_col,y_row)
+        return x_col, y_row, epsApproxNE, epsWSNE
+    else:
+        x_rowC = np.matmul(x_row.T,C)
+        if max(x_rowC) <= float(2/3):
+            epsApproxNE, epsWSNE = computeApproximationGuarantees(m,n,R,C,x_row,y_row)
+            return x_row, y_row, epsApproxNE, epsWSNE
+
+        else:
+            mx = max(x_rowC)
+            j_star = random.choice([i for i,j in enumerate(x_rowC) if j == mx])
+
+            i_star =-1
+            for i in range(m):
+                if R[i][j_star] > float(1/3) and C[i][j_star] > float(1/3):
+                    i_star = i
+                    break
+
+            x = np.zeros(m)
+            y = np.zeros(n)
+            x[i_star] = 1
+            y[j_star] = 1
+
+            epsApproxNE, epsWSNE = computeApproximationGuarantees(m,n,R,C,x,y)
+            return x, y, epsApproxNE, epsWSNE
 
 ### C. GET INPUT PARAMETERS ###
 def determineGameDimensions():
@@ -687,7 +721,7 @@ def determineGameDimensions():
 
     return( m, n )
 
-def determineNumRandomGamesToSolve():
+def determineNumRandomGamesToSolve(m,n):
 
     numOfRandomGamesToSolve = 0
     while numOfRandomGamesToSolve < 1 or numOfRandomGamesToSolve > 10000:
@@ -1022,6 +1056,539 @@ def defaultExperiments():
     np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'FPUNIApproxNEWorstGame2ROW', FPUNIApproxNEWorstGame2ROW, delimiter=',', fmt='%1d')
     np.savetxt('./EXPERIMENTS/P'+str(num)+'/P'+str(num)+'FPUNIApproxNEWorstGame2COL', FPUNIApproxNEWorstGame2COL, delimiter=',', fmt='%1d')
 
+def customExperiment():
+    (m,n) = determineGameDimensions()
+    
+    G10,G01 = determineNumGoodCellsForPlayers(m,n)
+    numOfRandomGamesToSolve = determineNumRandomGamesToSolve(m,n)
+
+    earliestColFor01 = 0
+    earliestRowFor10 = 0
+
+    num = int(input(bcolors.QUESTION+"Choose algorithm:\n1)DMP\n)2DEL\n3)FP PBR\n4)FP UNIFORM\n5)All\n "+ bcolors.ENDC))
+    if num ==1:
+        DMPepsAPPROX =np.zeros(numOfRandomGamesToSolve)
+        DMPepsWSNE =np.zeros(numOfRandomGamesToSolve)
+
+        minDMPepsAPPROX =0
+        minDMPepsWSNE =0
+
+        DMPApproxNEWorstGame1ROW = []
+        DMPApproxNEWorstGame1COL = []
+        DMPApproxNEWorstGame2ROW = []
+        DMPApproxNEWorstGame2COL = []
+
+        DMPApproxNEHistogram = np.zeros(10)
+        DMPWSNEHistogram = np.zeros(10)
+
+        start_time = time.time()
+
+        for i in range(0,numOfRandomGamesToSolve):
+            EXITCODE = -5
+            numOfAttempts = 0
+
+            # TRY GETTING A NEW RANDOM GAME
+            # REPEAT UNTIL EXITCODE = 0, ie, a valid game was constructed.
+            # NOTE: EXITCODE in {-1,-2,-3} indicates invalid parameters and exits the program)
+            while EXITCODE < 0: 
+                # EXIT CODE = -4 ==> No problem with parameters, only BAD LUCK, TOO MANY 01-elements within 10-eligible area
+                # EXIT CODE = -5 ==> No problem with parameters, only BAD LUCK, ALL-01 column exists within 10-eligible area
+                numOfAttempts += 1
+                print("Attempt #" + str(numOfAttempts) + " to construct a random game...")
+                EXITCODE,R,C = generate_winlose_game_without_pne(m,n,G01,G10,earliestColFor01,earliestRowFor10)
+
+                if EXITCODE in [-1,-2,-3]:
+                    print(bcolors.ERROR + "ERROR MESSAGE MAIN 1: Invalid parameters were provided for the construction of the random game." + bcolors.ENDC)
+                    exit()
+
+            reduced_m,reduced_n, reduced_R,reduced_C = removeStrictlyDominatedStrategies(m,n,R,C)
+
+            ### EXECUTING DMP ALGORITHM...  
+            x, y, DMPepsAPPROX[i], DMPepsWSNE[i] = approxNEConstructionDMP(reduced_m,reduced_n,reduced_R,reduced_C)
+
+        end_time = time.time()
+
+        if DMPepsAPPROX[i] > minDMPepsAPPROX:
+                minDMPepsAPPROX = DMPepsAPPROX[i]
+                DMPApproxNEWorstGame1ROW = R
+                DMPApproxNEWorstGame1COL = C
+
+        if DMPepsWSNE[i] > minDMPepsWSNE:
+                minDMPepsWSNE = DMPepsWSNE[i]
+                DMPApproxNEWorstGame2ROW = R
+                DMPApproxNEWorstGame2COL = C
+
+        counts, bins = np.histogram(DMPepsAPPROX, range=(0,1))
+        DMPApproxNEHistogram = counts
+        plt.title('DMPepsApproxNE')
+        plt.xlabel('ε')
+        plt.ylabel('Counts')
+        plt.stairs(counts,bins)
+        plt.savefig('./EXPERIMENTS/DMPApproxNEHistogram.jpg')
+        plt.close()
+
+        counts, bins = np.histogram(DMPepsWSNE, range=(0,1))
+        DMPWSDMPepsWSNEHistogram = counts
+        plt.title('DMPepsWSNE')
+        plt.xlabel('ε')
+        plt.ylabel('Counts')
+        plt.stairs(counts,bins)
+        plt.savefig('./EXPERIMENTS/DMPepsWSNEHistogram.jpg')
+        plt.close()
+
+       
+        np.savetxt('./EXPERIMENTS/DMPApproxNEWorstGame1ROW', DMPApproxNEWorstGame1ROW, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/DMPApproxNEWorstGame1COL', DMPApproxNEWorstGame1COL, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/DMPApproxNEWorstGame2ROW', DMPApproxNEWorstGame2ROW, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/DMPApproxNEWorstGame2COL', DMPApproxNEWorstGame2COL, delimiter=',', fmt='%1d')
+
+        print(bcolors.HEADER+'Runtime: '+ str( end_time - start_time) + ' seconds'+bcolors.ENDC)
+
+    elif num==2:
+        DELepsAPPROX =np.zeros(numOfRandomGamesToSolve)
+        DELepsWSNE =np.zeros(numOfRandomGamesToSolve)
+
+        minDELepsAPPROX =0
+        minDELepsWSNE =0
+
+        DELApproxNEWorstGame1ROW = []
+        DELApproxNEWorstGame1COL = []
+        DELApproxNEWorstGame2ROW = []
+        DELApproxNEWorstGame2COL = []
+
+        DELApproxNEHistogram = np.zeros(10)
+        DELWSNEHistogram = np.zeros(10)
+
+        start_time = time.time()
+
+        for i in range(0,numOfRandomGamesToSolve):
+            EXITCODE = -5
+            numOfAttempts = 0
+
+            # TRY GETTING A NEW RANDOM GAME
+            # REPEAT UNTIL EXITCODE = 0, ie, a valid game was constructed.
+            # NOTE: EXITCODE in {-1,-2,-3} indicates invalid parameters and exits the program)
+            while EXITCODE < 0: 
+                # EXIT CODE = -4 ==> No problem with parameters, only BAD LUCK, TOO MANY 01-elements within 10-eligible area
+                # EXIT CODE = -5 ==> No problem with parameters, only BAD LUCK, ALL-01 column exists within 10-eligible area
+                numOfAttempts += 1
+                print("Attempt #" + str(numOfAttempts) + " to construct a random game...")
+                EXITCODE,R,C = generate_winlose_game_without_pne(m,n,G01,G10,earliestColFor01,earliestRowFor10)
+
+                if EXITCODE in [-1,-2,-3]:
+                    print(bcolors.ERROR + "ERROR MESSAGE MAIN 1: Invalid parameters were provided for the construction of the random game." + bcolors.ENDC)
+                    exit()
+
+            reduced_m,reduced_n, reduced_R,reduced_C = removeStrictlyDominatedStrategies(m,n,R,C)
+
+            ### EXECUTING DEL ALGORITHM...  
+            x, y, DELepsAPPROX[i], DELepsWSNE[i] = approxNEConstructionDEL(reduced_m,reduced_n,reduced_R,reduced_C)
+
+        end_time = time.time()
+
+        if DELepsAPPROX[i] > minDELepsAPPROX:
+                minDELepsAPPROX = DELepsAPPROX[i]
+                DELApproxNEWorstGame1ROW = R
+                DELApproxNEWorstGame1COL = C
+
+        if DELepsWSNE[i] > minDELepsWSNE:
+                minDELepsWSNE = DELepsWSNE[i]
+                DELApproxNEWorstGame2ROW = R
+                DELApproxNEWorstGame2COL = C
+
+        counts, bins = np.histogram(DELepsAPPROX, range=(0,1))
+        DELApproxNEHistogram = counts
+        plt.title('DELepsApproxNE')
+        plt.xlabel('ε')
+        plt.ylabel('Counts')
+        plt.stairs(counts,bins)
+        plt.savefig('./EXPERIMENTS/DELApproxNEHistogram.jpg')
+        plt.close()
+
+        counts, bins = np.histogram(DELepsWSNE, range=(0,1))
+        DELWSDMPepsWSNEHistogram = counts
+        plt.title('DELepsWSNE')
+        plt.xlabel('ε')
+        plt.ylabel('Counts')
+        plt.stairs(counts,bins)
+        plt.savefig('./EXPERIMENTS/DELepsWSNEHistogram.jpg')
+        plt.close()
+
+       
+        np.savetxt('./EXPERIMENTS/DELApproxNEWorstGame1ROW', DELApproxNEWorstGame1ROW, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/DELApproxNEWorstGame1COL', DELApproxNEWorstGame1COL, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/DELApproxNEWorstGame2ROW', DELApproxNEWorstGame2ROW, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/DELApproxNEWorstGame2COL', DELApproxNEWorstGame2COL, delimiter=',', fmt='%1d')
+
+        print(bcolors.HEADER+'Runtime: '+ str( end_time - start_time) + ' seconds'+bcolors.ENDC)
+
+    elif num ==3:
+        FPPBRepsAPPROX =np.zeros(numOfRandomGamesToSolve)
+        FPPBRepsWSNE =np.zeros(numOfRandomGamesToSolve)
+
+        minFPPBRepsAPPROX =0
+        minFPPBRepsWSNE =0
+
+        FPPBRApproxNEWorstGame1ROW = []
+        FPPBRApproxNEWorstGame1COL = []
+        FPPBRApproxNEWorstGame2ROW = []
+        FPPBRApproxNEWorstGame2COL = []
+
+        FPPBRApproxNEHistogram = np.zeros(10)
+        FPPBRWSNEHistogram = np.zeros(10)
+
+        start_time = time.time()
+
+        for i in range(0,numOfRandomGamesToSolve):
+            EXITCODE = -5
+            numOfAttempts = 0
+
+            # TRY GETTING A NEW RANDOM GAME
+            # REPEAT UNTIL EXITCODE = 0, ie, a valid game was constructed.
+            # NOTE: EXITCODE in {-1,-2,-3} indicates invalid parameters and exits the program)
+            while EXITCODE < 0: 
+                # EXIT CODE = -4 ==> No problem with parameters, only BAD LUCK, TOO MANY 01-elements within 10-eligible area
+                # EXIT CODE = -5 ==> No problem with parameters, only BAD LUCK, ALL-01 column exists within 10-eligible area
+                numOfAttempts += 1
+                print("Attempt #" + str(numOfAttempts) + " to construct a random game...")
+                EXITCODE,R,C = generate_winlose_game_without_pne(m,n,G01,G10,earliestColFor01,earliestRowFor10)
+
+                if EXITCODE in [-1,-2,-3]:
+                    print(bcolors.ERROR + "ERROR MESSAGE MAIN 1: Invalid parameters were provided for the construction of the random game." + bcolors.ENDC)
+                    exit()
+
+            reduced_m,reduced_n, reduced_R,reduced_C = removeStrictlyDominatedStrategies(m,n,R,C)
+
+            ### EXECUTING FPPBR ALGORITHM...  
+            x, y, FPPBRepsAPPROX[i], FPPBRepsWSNE[i] = approxNEConstructionFPPBR(reduced_m,reduced_n,reduced_R,reduced_C)
+
+        end_time = time.time()
+
+        if FPPBRepsAPPROX[i] > minFPPBRepsAPPROX:
+                minFPPBRepsAPPROX = FPPBRepsAPPROX[i]
+                FPPBRApproxNEWorstGame1ROW = R
+                FPPBRApproxNEWorstGame1COL = C
+
+        if FPPBRepsWSNE[i] > minFPPBRepsWSNE:
+                minFPPBRepsWSNE = FPPBRepsWSNE[i]
+                FPPBRApproxNEWorstGame2ROW = R
+                FPPBRApproxNEWorstGame2COL = C
+
+        counts, bins = np.histogram(FPPBRepsAPPROX, range=(0,1))
+        FPPBRApproxNEHistogram = counts
+        plt.title('FPPBRepsApproxNE')
+        plt.xlabel('ε')
+        plt.ylabel('Counts')
+        plt.stairs(counts,bins)
+        plt.savefig('./EXPERIMENTS/FPPBRApproxNEHistogram.jpg')
+        plt.close()
+
+        counts, bins = np.histogram(FPPBRepsWSNE, range=(0,1))
+        FPPBRWSFPPBRepsWSNEHistogram = counts
+        plt.title('FPPBRepsWSNE')
+        plt.xlabel('ε')
+        plt.ylabel('Counts')
+        plt.stairs(counts,bins)
+        plt.savefig('./EXPERIMENTS/FPPBRepsWSNEHistogram.jpg')
+        plt.close()
+
+       
+        np.savetxt('./EXPERIMENTS/FPPBRApproxNEWorstGame1ROW', FPPBRApproxNEWorstGame1ROW, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/FPPBRApproxNEWorstGame1COL', FPPBRApproxNEWorstGame1COL, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/FPPBRApproxNEWorstGame2ROW', FPPBRApproxNEWorstGame2ROW, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/FPPBRApproxNEWorstGame2COL', FPPBRApproxNEWorstGame2COL, delimiter=',', fmt='%1d')
+
+        print(bcolors.HEADER+'Runtime: '+ str( end_time - start_time) + ' seconds'+bcolors.ENDC)
+
+    elif num ==4:
+        FPUNIepsAPPROX =np.zeros(numOfRandomGamesToSolve)
+        FPUNIepsWSNE =np.zeros(numOfRandomGamesToSolve)
+
+        minFPUNIepsAPPROX =0
+        minFPUNIepsWSNE =0
+
+        FPUNIApproxNEWorstGame1ROW = []
+        FPUNIApproxNEWorstGame1COL = []
+        FPUNIApproxNEWorstGame2ROW = []
+        FPUNIApproxNEWorstGame2COL = []
+
+        FPUNIApproxNEHistogram = np.zeros(10)
+        FPUNIWSNEHistogram = np.zeros(10)
+
+        start_time = time.time()
+
+        for i in range(0,numOfRandomGamesToSolve):
+            EXITCODE = -5
+            numOfAttempts = 0
+
+            # TRY GETTING A NEW RANDOM GAME
+            # REPEAT UNTIL EXITCODE = 0, ie, a valid game was constructed.
+            # NOTE: EXITCODE in {-1,-2,-3} indicates invalid parameters and exits the program)
+            while EXITCODE < 0: 
+                # EXIT CODE = -4 ==> No problem with parameters, only BAD LUCK, TOO MANY 01-elements within 10-eligible area
+                # EXIT CODE = -5 ==> No problem with parameters, only BAD LUCK, ALL-01 column exists within 10-eligible area
+                numOfAttempts += 1
+                print("Attempt #" + str(numOfAttempts) + " to construct a random game...")
+                EXITCODE,R,C = generate_winlose_game_without_pne(m,n,G01,G10,earliestColFor01,earliestRowFor10)
+
+                if EXITCODE in [-1,-2,-3]:
+                    print(bcolors.ERROR + "ERROR MESSAGE MAIN 1: Invalid parameters were provided for the construction of the random game." + bcolors.ENDC)
+                    exit()
+
+            reduced_m,reduced_n, reduced_R,reduced_C = removeStrictlyDominatedStrategies(m,n,R,C)
+
+            ### EXECUTING FPUNI ALGORITHM...  
+            x, y, FPUNIepsAPPROX[i], FPUNIepsWSNE[i] = approxNEConstructionFPUNI(reduced_m,reduced_n,reduced_R,reduced_C)
+
+        end_time = time.time()
+
+        if FPUNIepsAPPROX[i] > minFPUNIepsAPPROX:
+                minFPUNIepsAPPROX = FPUNIepsAPPROX[i]
+                FPUNIApproxNEWorstGame1ROW = R
+                FPUNIApproxNEWorstGame1COL = C
+
+        if FPUNIepsWSNE[i] > minFPUNIepsWSNE:
+                minFPUNIepsWSNE = FPUNIepsWSNE[i]
+                FPUNIApproxNEWorstGame2ROW = R
+                FPUNIApproxNEWorstGame2COL = C
+
+        counts, bins = np.histogram(FPUNIepsAPPROX, range=(0,1))
+        FPUNIApproxNEHistogram = counts
+        plt.title('FPUNIepsApproxNE')
+        plt.xlabel('ε')
+        plt.ylabel('Counts')
+        plt.stairs(counts,bins)
+        plt.savefig('./EXPERIMENTS/FPUNIApproxNEHistogram.jpg')
+        plt.close()
+
+        counts, bins = np.histogram(FPUNIepsWSNE, range=(0,1))
+        FPUNIWSFPUNIepsWSNEHistogram = counts
+        plt.title('FPUNIepsWSNE')
+        plt.xlabel('ε')
+        plt.ylabel('Counts')
+        plt.stairs(counts,bins)
+        plt.savefig('./EXPERIMENTS/FPUNIepsWSNEHistogram.jpg')
+        plt.close()
+
+       
+        np.savetxt('./EXPERIMENTS/FPUNIApproxNEWorstGame1ROW', FPUNIApproxNEWorstGame1ROW, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/FPUNIApproxNEWorstGame1COL', FPUNIApproxNEWorstGame1COL, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/FPUNIApproxNEWorstGame2ROW', FPUNIApproxNEWorstGame2ROW, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/FPUNIApproxNEWorstGame2COL', FPUNIApproxNEWorstGame2COL, delimiter=',', fmt='%1d')
+
+        print(bcolors.HEADER+'Runtime: '+ str( end_time - start_time) + ' seconds'+bcolors.ENDC)
+
+    elif num==5:
+        DMPepsAPPROX =np.zeros(numOfRandomGamesToSolve)
+        DMPepsWSNE =np.zeros(numOfRandomGamesToSolve)
+        DELepsAPPROX =np.zeros(numOfRandomGamesToSolve)
+        DELepsWSNE =np.zeros(numOfRandomGamesToSolve)
+        FPPBRepsAPPROX =np.zeros(numOfRandomGamesToSolve)
+        FPPBRepsWSNE =np.zeros(numOfRandomGamesToSolve)
+        FPUNIepsAPPROX =np.zeros(numOfRandomGamesToSolve)
+        FPUNIepsWSNE =np.zeros(numOfRandomGamesToSolve)
+        
+
+        minDMPepsAPPROX =0
+        minDMPepsWSNE =0
+        minDELepsAPPROX =0
+        minDELepsWSNE =0
+        minFPPBRepsAPPROX =0
+        minFPPBRepsWSNE =0
+        minFPUNIepsAPPROX =0
+        minFPUNIepsWSNE =0
+        
+        DMPApproxNEWorstGame1ROW = []
+        DMPApproxNEWorstGame1COL = []
+        DMPApproxNEWorstGame2ROW = []
+        DMPApproxNEWorstGame2COL = []
+        
+        DELApproxNEWorstGame1ROW = []
+        DELApproxNEWorstGame1COL = []
+        DELApproxNEWorstGame2ROW = []
+        DELApproxNEWorstGame2COL = []
+        
+        FPPBRApproxNEWorstGame1ROW = []
+        FPPBRApproxNEWorstGame1COL = []
+        FPPBRApproxNEWorstGame2ROW = []
+        FPPBRApproxNEWorstGame2COL = []
+
+        FPUNIApproxNEWorstGame1ROW = []
+        FPUNIApproxNEWorstGame1COL = []
+        FPUNIApproxNEWorstGame2ROW = []
+        FPUNIApproxNEWorstGame2COL = []
+
+        DMPApproxNEHistogram = np.zeros(10)
+        DMPWSNEHistogram = np.zeros(10)
+        DELApproxNEHistogram = np.zeros(10)
+        DELWSNEHistogram = np.zeros(10)
+        FPPBRApproxNEHistogram = np.zeros(10)
+        FPPBRWSNEHistogram = np.zeros(10)
+        FPUNIApproxNEHistogram = np.zeros(10)
+        FPUNIWSNEHistogram = np.zeros(10)
+
+        for i in range(0,numOfRandomGamesToSolve):
+            EXITCODE = -5
+            numOfAttempts = 0
+
+            # TRY GETTING A NEW RANDOM GAME
+            # REPEAT UNTIL EXITCODE = 0, ie, a valid game was constructed.
+            # NOTE: EXITCODE in {-1,-2,-3} indicates invalid parameters and exits the program)
+            while EXITCODE < 0: 
+                # EXIT CODE = -4 ==> No problem with parameters, only BAD LUCK, TOO MANY 01-elements within 10-eligible area
+                # EXIT CODE = -5 ==> No problem with parameters, only BAD LUCK, ALL-01 column exists within 10-eligible area
+                numOfAttempts += 1
+                print("Attempt #" + str(numOfAttempts) + " to construct a random game...")
+                EXITCODE,R,C = generate_winlose_game_without_pne(m,n,G01,G10,earliestColFor01,earliestRowFor10)
+
+                if EXITCODE in [-1,-2,-3]:
+                    print(bcolors.ERROR + "ERROR MESSAGE MAIN 1: Invalid parameters were provided for the construction of the random game." + bcolors.ENDC)
+                    exit()
+
+            reduced_m,reduced_n, reduced_R,reduced_C = removeStrictlyDominatedStrategies(m,n,R,C)
+
+            ### EXECUTING DMP ALGORITHM...  
+            x, y, DMPepsAPPROX[i], DMPepsWSNE[i] = approxNEConstructionDMP(reduced_m,reduced_n,reduced_R,reduced_C)
+            ### EXECUTING DEL ALGORITHM...
+            x, y, DELepsAPPROX[i], DELepsWSNE[i]= approxNEConstructionDEL(reduced_m,reduced_n,reduced_R,reduced_C)
+            ### EXECUTING FICTITIOUS PLAY PBR ALGORITHM...
+            x, y, FPPBRepsAPPROX[i], FPPBRepsWSNE[i] = approxNEConstructionFPPBR(reduced_m,reduced_n,reduced_R,reduced_C)
+            ### EXECUTING FICTITIOUS PLAY UNIFORM ALGORITHM...
+            x, y,  FPUNIepsAPPROX[i],  FPUNIepsWSNE[i] = approxNEConstructionFPUNI(reduced_m,reduced_n,reduced_R,reduced_C)
+
+            
+            if DMPepsAPPROX[i] > minDMPepsAPPROX:
+                minDMPepsAPPROX = DMPepsAPPROX[i]
+                DMPApproxNEWorstGame1ROW = R
+                DMPApproxNEWorstGame1COL = C
+            if DMPepsWSNE[i] > minDMPepsWSNE:
+                minDMPepsWSNE = DMPepsWSNE[i]
+                DMPApproxNEWorstGame2ROW = R
+                DMPApproxNEWorstGame2COL = C
+            if DELepsAPPROX[i] > minDELepsAPPROX:
+                minDELepsAPPROX = DELepsAPPROX[i]
+                DELApproxNEWorstGame1ROW = R
+                DELApproxNEWorstGame1COL = C
+            if DELepsWSNE[i] > minDELepsWSNE:
+                minDELepsWSNE = DELepsWSNE[i]
+                DELApproxNEWorstGame2ROW = R
+                DELApproxNEWorstGame2COL = C
+            if FPPBRepsAPPROX[i] > minFPPBRepsAPPROX:
+                minFPPBRepsAPPROX = FPPBRepsAPPROX[i]
+                FPPBRApproxNEWorstGame1ROW = R
+                FPPBRApproxNEWorstGame1COL = C
+            if FPPBRepsWSNE[i] > minFPPBRepsWSNE:
+                minFPPBRepsWSNE = FPPBRepsWSNE[i]
+                FPPBRApproxNEWorstGame2ROW = R
+                FPPBRApproxNEWorstGame2COL = C
+            if FPUNIepsAPPROX[i] > minFPUNIepsAPPROX:
+                minFPUNIepsAPPROX = FPUNIepsAPPROX[i]
+                FPUNIApproxNEWorstGame1ROW = R
+                FPUNIApproxNEWorstGame1COL = C
+            if FPUNIepsWSNE[i] > minFPUNIepsWSNE:
+                minFPUNIepsWSNE = FPUNIepsWSNE[i]
+                FPUNIApproxNEWorstGame2ROW = R
+                FPPBRApproxNEWorstGame2COL = C
+
+        
+    
+        counts, bins = np.histogram(DMPepsAPPROX, range=(0,1))
+        DMPApproxNEHistogram = counts
+        plt.title('DMPepsApproxNE')
+        plt.xlabel('ε')
+        plt.ylabel('Counts')
+        plt.stairs(counts,bins)
+        plt.savefig('./EXPERIMENTS/DMPApproxNEHistogram.jpg')
+        plt.close()
+
+        counts, bins = np.histogram(DELepsAPPROX, range=(0,1))
+        DELApproxNEHistogram = counts
+        plt.title('DELepsApproxNE')
+        plt.xlabel('ε')
+        plt.ylabel('Counts')
+        plt.stairs(counts,bins)
+        plt.savefig('./EXPERIMENTS/DELApproxNEHistogram.jpg')
+        plt.close()
+
+        counts, bins = np.histogram(FPPBRepsAPPROX, range=(0,1))
+        FPPBRApproxNEHistogram = counts
+        plt.title('FPPBRepsAPPROX')
+        plt.xlabel('ε')
+        plt.ylabel('Counts')
+        plt.stairs(counts,bins)
+        plt.savefig('./EXPERIMENTS/FPPBRApproxNEHistogram.jpg')
+        plt.close()
+
+        counts, bins = np.histogram(FPUNIepsAPPROX, range=(0,1))
+        FPUNIApproxNEHistogram = counts
+        plt.title('FPUNIepsApproxNE')
+        plt.xlabel('ε')
+        plt.ylabel('Counts')
+        plt.stairs(counts,bins)
+        plt.savefig('./EXPERIMENTS/FPUNIApproxNEHistogram.jpg')
+        plt.close()
+
+        counts, bins = np.histogram(DMPepsWSNE, range=(0,1))
+        DMPWSDMPepsWSNEHistogram = counts
+        plt.title('DMPepsWSNE')
+        plt.xlabel('ε')
+        plt.ylabel('Counts')
+        plt.stairs(counts,bins)
+        plt.savefig('./EXPERIMENTS/DMPepsWSNEHistogram.jpg')
+        plt.close()
+
+        counts, bins = np.histogram(DELepsWSNE, range=(0,1))
+        DELWSDMPepsWSNEHistogram = counts
+        plt.title('DELepsWSNE')
+        plt.xlabel('ε')
+        plt.ylabel('Counts')
+        plt.stairs(counts,bins)
+        plt.savefig('./EXPERIMENTS/DELepsWSNEHistogram.jpg')
+        plt.close()
+
+        counts, bins = np.histogram(FPPBRepsWSNE, range=(0,1))
+        FPPBRWSDMPepsWSNEHistogram = counts
+        plt.title('FPPBRepsWSNE')
+        plt.xlabel('ε')
+        plt.ylabel('Counts')
+        plt.stairs(counts,bins)
+        plt.savefig('./EXPERIMENTS/FPPBRepsWSNEHistogram.jpg')
+        plt.close()
+
+        counts, bins = np.histogram(FPUNIepsWSNE, range=(0,1))
+        FPUNIWSDMPepsWSNEHistogram = counts
+        plt.title('FPUNIepsWSNE')
+        plt.xlabel('ε')
+        plt.ylabel('Counts')
+        plt.stairs(counts,bins)
+        plt.savefig('./EXPERIMENTS/FPUNIepsWSNEHistogram.jpg')
+        plt.close()
+
+        
+        np.savetxt('./EXPERIMENTS/DMPApproxNEWorstGame1ROW', DMPApproxNEWorstGame1ROW, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/DMPApproxNEWorstGame1COL', DMPApproxNEWorstGame1COL, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/DMPApproxNEWorstGame2ROW', DMPApproxNEWorstGame2ROW, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/DMPApproxNEWorstGame2COL', DMPApproxNEWorstGame2COL, delimiter=',', fmt='%1d')
+
+        
+        np.savetxt('./EXPERIMENTS/DELApproxNEWorstGame1ROW', DELApproxNEWorstGame1ROW, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/DELApproxNEWorstGame1COL', DELApproxNEWorstGame1COL, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/DELApproxNEWorstGame2ROW', DELApproxNEWorstGame2ROW, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/DELApproxNEWorstGame2COL', DELApproxNEWorstGame2COL, delimiter=',', fmt='%1d')
+
+        
+        np.savetxt('./EXPERIMENTS/FPPBRApproxNEWorstGame1ROW', FPPBRApproxNEWorstGame1ROW, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/FPPBRApproxNEWorstGame1COL', FPPBRApproxNEWorstGame1COL, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/FPPBRApproxNEWorstGame2ROW', FPPBRApproxNEWorstGame2ROW, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/FPPBRApproxNEWorstGame2COL', FPPBRApproxNEWorstGame2COL, delimiter=',', fmt='%1d')
+
+        
+        np.savetxt('./EXPERIMENTS/FPUNIApproxNEWorstGame1ROW', FPUNIApproxNEWorstGame1ROW, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/FPUNIApproxNEWorstGame1COL', FPUNIApproxNEWorstGame1COL, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/FPUNIApproxNEWorstGame2ROW', FPUNIApproxNEWorstGame2ROW, delimiter=',', fmt='%1d')
+        np.savetxt('./EXPERIMENTS/FPUNIApproxNEWorstGame2COL', FPUNIApproxNEWorstGame2COL, delimiter=',', fmt='%1d')
+
+
 ### F. MENU ###
 def menu():
     
@@ -1078,8 +1645,7 @@ def menu():
             if num == 1:
                 defaultExperiments()
             elif num == 2:
-                print('custom')
-                #TODO
+                customExperiment()
             else:
                 return
 
