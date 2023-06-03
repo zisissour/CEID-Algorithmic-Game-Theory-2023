@@ -814,7 +814,7 @@ def print_LAB2_preamble():
 def defaultExperiments():
 
     m,n = 10,10
-    numOfRandomGamesToSolve = 100
+    numOfRandomGamesToSolve = 1000
     earliestColFor01 = 0
     earliestRowFor10 = 0
 
@@ -923,36 +923,36 @@ def defaultExperiments():
         
         if DMPepsAPPROX[i] > minDMPepsAPPROX:
             minDMPepsAPPROX = DMPepsAPPROX[i]
-            DMPApproxNEWorstGame1ROW = R
-            DMPApproxNEWorstGame1COL = C
+            DMPApproxNEWorstGame1ROW = reduced_R
+            DMPApproxNEWorstGame1COL = reduced_C
         if DMPepsWSNE[i] > minDMPepsWSNE:
             minDMPepsWSNE = DMPepsWSNE[i]
-            DMPApproxNEWorstGame2ROW = R
-            DMPApproxNEWorstGame2COL = C
+            DMPApproxNEWorstGame2ROW = reduced_R
+            DMPApproxNEWorstGame2COL = reduced_C
         if DELepsAPPROX[i] > minDELepsAPPROX:
             minDELepsAPPROX = DELepsAPPROX[i]
-            DELApproxNEWorstGame1ROW = R
-            DELApproxNEWorstGame1COL = C
+            DELApproxNEWorstGame1ROW = reduced_R
+            DELApproxNEWorstGame1COL = reduced_C
         if DELepsWSNE[i] > minDELepsWSNE:
             minDELepsWSNE = DELepsWSNE[i]
-            DELApproxNEWorstGame2ROW = R
-            DELApproxNEWorstGame2COL = C
+            DELApproxNEWorstGame2ROW = reduced_R
+            DELApproxNEWorstGame2COL = reduced_C
         if FPPBRepsAPPROX[i] > minFPPBRepsAPPROX:
             minFPPBRepsAPPROX = FPPBRepsAPPROX[i]
-            FPPBRApproxNEWorstGame1ROW = R
-            FPPBRApproxNEWorstGame1COL = C
+            FPPBRApproxNEWorstGame1ROW = reduced_R
+            FPPBRApproxNEWorstGame1COL = reduced_C
         if FPPBRepsWSNE[i] > minFPPBRepsWSNE:
             minFPPBRepsWSNE = FPPBRepsWSNE[i]
-            FPPBRApproxNEWorstGame2ROW = R
-            FPPBRApproxNEWorstGame2COL = C
+            FPPBRApproxNEWorstGame2ROW = reduced_R
+            FPPBRApproxNEWorstGame2COL = reduced_C
         if FPUNIepsAPPROX[i] > minFPUNIepsAPPROX:
             minFPUNIepsAPPROX = FPUNIepsAPPROX[i]
-            FPUNIApproxNEWorstGame1ROW = R
-            FPUNIApproxNEWorstGame1COL = C
+            FPUNIApproxNEWorstGame1ROW = reduced_R
+            FPUNIApproxNEWorstGame1COL = reduced_C
         if FPUNIepsWSNE[i] > minFPUNIepsWSNE:
             minFPUNIepsWSNE = FPUNIepsWSNE[i]
-            FPUNIApproxNEWorstGame2ROW = R
-            FPPBRApproxNEWorstGame2COL = C
+            FPUNIApproxNEWorstGame2ROW = reduced_R
+            FPPBRApproxNEWorstGame2COL = reduced_C
 
     
   
@@ -993,7 +993,7 @@ def defaultExperiments():
     plt.close()
 
     counts, bins = np.histogram(DMPepsWSNE, range=(0,1))
-    DMPWSDMPepsWSNEHistogram = counts
+    DMPWSNEHistogram = counts
     plt.title('DMPepsWSNE')
     plt.xlabel('ε')
     plt.ylabel('Counts')
@@ -1002,7 +1002,7 @@ def defaultExperiments():
     plt.close()
 
     counts, bins = np.histogram(DELepsWSNE, range=(0,1))
-    DELWSDMPepsWSNEHistogram = counts
+    DELWSNEHistogram = counts
     plt.title('DELepsWSNE')
     plt.xlabel('ε')
     plt.ylabel('Counts')
@@ -1011,7 +1011,7 @@ def defaultExperiments():
     plt.close()
 
     counts, bins = np.histogram(FPPBRepsWSNE, range=(0,1))
-    FPPBRWSDMPepsWSNEHistogram = counts
+    FPPBRWSNEHistogram = counts
     plt.title('FPPBRepsWSNE')
     plt.xlabel('ε')
     plt.ylabel('Counts')
@@ -1020,7 +1020,7 @@ def defaultExperiments():
     plt.close()
 
     counts, bins = np.histogram(FPUNIepsWSNE, range=(0,1))
-    FPUNIWSDMPepsWSNEHistogram = counts
+    FPUNIWSNEHistogram = counts
     plt.title('FPUNIepsWSNE')
     plt.xlabel('ε')
     plt.ylabel('Counts')
@@ -1734,23 +1734,3 @@ maxNumOfRandomGamesToSolve = 10000
 maxNumberOfActions = 20
 
 menu()
-
-
-
-
-drawBimatrix(m,n,R,C)
-
-
-
-
-
-
-print(bcolors.MSG + "Reduced bimatrix, after removal of strictly dominated actions:")
-drawBimatrix(reduced_m,reduced_n,reduced_R,reduced_C)
-
-
-
-
-
-
-
