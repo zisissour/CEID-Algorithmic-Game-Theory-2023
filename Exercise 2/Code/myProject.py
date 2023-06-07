@@ -504,16 +504,45 @@ def interpretReducedStrategiesForOriginalGame(reduced_x,reduced_y,reduced_R,redu
     return(x,y)
 
 def computeApproximationGuarantees(m,n,R,C,x,y):
-
-    print(bcolors.TODO + '''
-    ROUTINE: computeApproximationGuarantees
-    PRE:    A bimatrix game, described by the two payoff matrices, with payoff values in [0,1].
-            A profile (x,y) of strategies for the two players.
-    POST:   The two NASH approximation guarantees, epsAPPROX and epsWSNE in [0,1].''' + bcolors.ENDC)
-    
     epsAPPROX = 1
     epsWSNE = 1
+
+    #Make sure everything is a numpy array
+    R=np.array(R)
+    C=np.array(C)
+    x=np.array(x)
+    y=np.array(y)
+
+    Ry = np.matmul(R,y)
+    xC = np.matmul(x.T,C)
+        
+    #Calculating epsAPPROX
+    xRy = np.matmul(x.T,Ry)
+    xCy = np.matmul(xC,y)
+
+    eps1 = max(Ry) - xRy
+    eps2 = max(xC) - xCy
+    epsAPPROX = max(eps1, eps2)
+
+    #Calculating epsWSNE
+    
+    Ry_i=[]
+    for i in range(m):
+       if x[i]>0:
+          Ry_i.append(np.matmul(R[i],y))
+    
+    Cx_j = []
+    for j in range(n):
+       if y[j]>0:
+          Cx_j.append(np.matmul(C.T[j],x))
+
+    eps1 = max(Ry) - min(Ry_i)
+    eps2 = max(xC) - min(Cx_j)
+
+    epsWSNE = max(eps1, eps2)
+
     return(epsAPPROX,epsWSNE)
+   
 
 def approxNEConstructionDMP(m,n,R,C):
     print(bcolors.TODO + '''
@@ -628,6 +657,93 @@ def approxNEConstructionDEL(m,n,R,C):
             epsAPPROX,epsWSNE = computeApproximationGuarantees(m,n,R,C,x,y)
 
     return(x,y,epsAPPROX,epsWSNE)
+
+
+
+
+#def approxNEConstructionDEL(m,n,R,C):
+    #print(bcolors.TODO + '''
+    #ROUTINE: approxNEConstructionDEL
+    #PRE:    A bimatrix game, described by the two payoff matrices, with payoff values in [0,1].
+    #POST:   A profile of strategies (x,y) produced by the DEL algorithm.''' + bcolors.ENDC)
+    R=np.array(R)
+    C=np.array(C)
+
+    x_row=np.array([])
+    y_row=np.array([])
+    #x_row είναι η MAXMIN στρατιγική της παίκτριας γραμμής 
+    x_row,y_row = solveZeroSumGame(m,n,R) # this example solves (R,-R)
+    
+    
+
+    #Υπολογισμός V_row που είναι η εγγυημένη ωφέλια της παίκτριας γραμμής
+    Ry_row = np.matmul(R,y_row)
+    V_row = np.matmul(x_row.T,Ry_row)
+
+    x_col=np.array([])
+    y_col=np.array([])
+    #y_col είναι η MAXMIN στρατιγική του παίκτη στήλης 
+    x_col,y_col = solveZeroSumGame(m,n,C) # this example solves (C,-C)
+    
+    #Υπολογισμός V_col που είναι η εγγυημένη ωφέλια του παίκτη στήλης
+    Cy_col = np.matmul(C,y_col)
+    V_col=np.matmul(x_col.T,Cy_col)
+
+    #Αναμενόμενη ωφέλια του παίκτη στήλης ενάντια στο x_row
+    x_rowC=np.matmul(x_row.T,C) 
+    
+    if V_row < V_col :
+        #αντάλλαξε ρόλους των δύο παικτών δηλαδή R-> C.T και C-> R.T
+        store_R= R
+        R=C.T
+        C=store_R.T
+        
+        
+        #Eπανεύρεση των x_row,y_row,x_col,y_col,V_row,V_col
+        #x_row είναι η MAXMIN στρατιγική της παίκτριας γραμμής 
+        x_row,y_row = solveZeroSumGame(m,n,R) # this example solves (R,-R)
+        
+     
+
+        #Υπολογισμός V_row που είναι η εγγυημένη ωφέλια της παίκτριας γραμμής
+        Ry_row = np.matmul(R,y_row)
+        V_row = np.matmul(x_row.T,Ry_row)
+
+
+        #y_col είναι η MAXMIN στρατιγική του παίκτη στήλης 
+        x_col,y_col = solveZeroSumGame(m,n,C) # this example solves (C,-C)
+        
+
+        #Υπολογισμός V_col που είναι η εγγυημένη ωφέλια του παίκτη στήλης
+        Cy_col = np.matmul(C,y_col)
+        V_col=np.matmul(x_col.T,Cy_col)
+
+        #Αναμενόμενη ωφέλια του παίκτη στήλης ενάντια στο x_row
+        x_rowC=np.matmul(x_row.T,C) 
+
+
+
+
+    if V_row<= 2/3:
+        epsAPPROX,epsWSNE = computeApproximationGuarantees(m,n,R,C,x_row,y_row)
+        return x_col,y_row,epsAPPROX,epsWSNE
+    else:
+        if max(x_rowC)<= 2/3:
+            epsAPPROX,epsWSNE = computeApproximationGuarantees(m,n,R,C,x_row,y_row)
+            return x_row,y_row,epsAPPROX,epsWSNE
+        else:
+            pbr=max(x_rowC)
+            j_star = random.choice([i for i, j in enumerate(x_rowC) if j == pbr]) 
+            i_star = random.choice([i for i, j in enumerate(x_rowC) if R[i] > 1/3 and C[j_star]>1/3]) 
+
+            x=np.zeros(m)
+            y=np.zeros(n)
+
+            x[i_star]=1
+            y[j_star]=1
+            epsAPPROX,epsWSNE = computeApproximationGuarantees(m,n,R,C,x_row,y_row)
+
+            return x,y,epsAPPROX,epsWSNE
 
 ### C. GET INPUT PARAMETERS ###
 def determineGameDimensions():
@@ -800,11 +916,11 @@ else:
     print( bcolors.MSG + "No pure NE exists for (R,C). Looking for an approximate NE point..." + bcolors.ENDC )
 
 
-#reduced_m,reduced_n, reduced_R,reduced_C = removeStrictlyDominatedStrategies(m,n,R,C)
+reduced_m,reduced_n, reduced_R,reduced_C = removeStrictlyDominatedStrategies(m,n,R,C)
 
 print(bcolors.MSG + "Reduced bimatrix, after removal of strictly dominated actions:")
 
-#drawBimatrix(reduced_m,reduced_n,reduced_R,reduced_C)
+drawBimatrix(reduced_m,reduced_n,reduced_R,reduced_C)
 
 
 ### EXECUTING DEL ALGORITHM...
