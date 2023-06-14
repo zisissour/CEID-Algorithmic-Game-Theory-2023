@@ -646,6 +646,9 @@ def approxNEConstructionDEL(m,n,R,C,):
     R = np.array(R)
     C = np.array(C)
 
+    #Solve zerosum game for both players
+    #and get guaranteed profit
+
     x_row, y_row = solveZeroSumGame(m,n,R)
     x_rowR = np.matmul(x_row.T,R)
     V_row = np.matmul(x_rowR,y_row)
@@ -654,9 +657,11 @@ def approxNEConstructionDEL(m,n,R,C,):
     x_colC = np.matmul(x_col,C)
     V_col = np.matmul(x_colC,y_col)
 
+    #Exchange player rows
     if V_row < V_col:
-        R=R.T
-        C=C.T
+        temp=R
+        R=C.T
+        C=temp.T
         tmp=m
         m=n
         n=tmp
@@ -676,14 +681,18 @@ def approxNEConstructionDEL(m,n,R,C,):
 
         else:
             mx = max(x_rowC)
+
+            #Choose random column with max estimated profit
             j_star = random.choice([i for i,j in enumerate(x_rowC) if j == mx])
 
+            #Itterate over all rows in the column and find one that's suitable
             i_star =-1
             for i in range(m):
                 if R[i][j_star] > float(1/3) and C[i][j_star] > float(1/3):
                     i_star = i
                     break
-
+            
+            #Pure strategies using the indexes found
             x = np.zeros(m)
             y = np.zeros(n)
             x[i_star] = 1
@@ -774,9 +783,9 @@ def print_LAB2_preamble():
     print(bcolors.HEADER + MINUSLINE + """
                         CEID-NE509 (2022-3) / LAB-2""")  
     print(MINUSLINE + """
-        STUDENT NAME:           < provide your name here >
-        STUDENT AM:             < provide your AM here >
-        JOINT WORK WITH:        < provide your partner's name and AM here >""")
+        STUDENT NAME:           Zisis Sourlas
+        STUDENT AM:             1072477
+        JOINT WORK WITH:        Michail Mpallas 1072599""")
     print(MINUSLINE + bcolors.ENDC)
 
     input("Press ENTER to continue...")
@@ -1683,7 +1692,7 @@ def menu():
 
         elif num == 2:
             ### EXECUTING DEL ALGORITHM...
-            x, y, DELepsAPPROX, DELepsWSNE = approxNEConstructionDEL(m,m,R,C)
+            x, y, DELepsAPPROX, DELepsWSNE = approxNEConstructionDEL(m,n,R,C)
             #DELx, DELy = interpretReducedStrategiesForOriginalGame(x, y, R, C, reduced_R, reduced_C)
             print( bcolors.MSG + PLUSLINE )
             print("\tConstructed solution for DEL:")
